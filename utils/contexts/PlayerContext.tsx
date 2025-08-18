@@ -1,55 +1,33 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import { MobilePlayer, type musicDelta } from "@ohene/flow-player";
-import { checkStorage } from "@/Functions/checkStorage";
-import { mediaPermissionsRequest } from "@/Functions/mediaPermissionsRequest";
-import { createStorageFile } from "@/Functions/createStorageFile";
 
-const PlayerContext = createContext<MobilePlayer | null>(null);
+const PlayerContext = createContext<{
+  player: MobilePlayer;
+  isloading: boolean;
+  setPlayer: (player: MobilePlayer) => void;
+  setIsloading: (isloading: boolean) => void;
+} | null>(null);
 
-export function usePlayer(): MobilePlayer | null {
+export function usePlayer(): {
+  player: MobilePlayer;
+  isloading: boolean;
+  setPlayer: (player: MobilePlayer) => void;
+  setIsloading: (isloading: boolean) => void;
+} | null {
   return useContext(PlayerContext);
 }
 
 function PlayerContextProvider({ children }: any) {
-  const [player, setPlayer] = useState(new MobilePlayer([]));
+  const [player, setPlayer] = useState<MobilePlayer>(new MobilePlayer([]));
+  const [isloading, setIsloading] = useState<boolean>(true);
 
-  async function loadSongs(): Promise<musicDelta[] | null> {
-    const { content, isDataAvailable } = await checkStorage();
-
-    if (!isDataAvailable) {
-      const { granted, media } = await mediaPermissionsRequest();
-      if (!granted) {
-        return null;
-      }
-
-      const data: musicDelta[] = media.map((asset, index) => {
-        return {
-          music_path: asset.uri,
-          duration: asset.duration,
-          id: index,
-          stats: { ...asset },
-        };
-      });
-      const stored = await createStorageFile(JSON.stringify(data));
-      if (!stored) {
-        return null;
-      }
-      return data;
-    }
-
-    return content;
-  }
-
-  useEffect(() => {
-    loadSongs().then((songs) => {
-      if (songs) {
-        setPlayer(new MobilePlayer(songs));
-      }
-    });
-  }, []);
+  const value = useMemo(
+    () => ({ player, isloading, setPlayer, setIsloading }),
+    [player, isloading]
+  );
 
   return (
-    <PlayerContext.Provider value={player}>{children}</PlayerContext.Provider>
+    <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
   );
 }
 export default PlayerContextProvider;

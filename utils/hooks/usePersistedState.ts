@@ -1,24 +1,35 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type Response<T> = [Promise<T>, Dispatch<SetStateAction<Promise<T>>>]
+type Response<T> = [T, React.Dispatch<React.SetStateAction<T>>];
 
-export function usePersistedState<T>(key: string, inititialState: T): Response<T> {
-    const [state, setState] = useState(async () => {
-        const storageValue = await AsyncStorage.getItem(key)
+export function usePersistedState<T extends object>(
+  key: string,
+  initialState: T
+): Response<T> {
+  const [state, setState] = useState<T>(initialState);
 
-        if (storageValue) {
-            return JSON.parse(storageValue)
-        } else {        
-            return inititialState
+  useEffect(() => {
+    (async () => {
+      try {
+        const storageValue = await AsyncStorage.getItem(key);
+        if (storageValue !== null) {
+          const parsed = JSON.parse(storageValue);
+          if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+            setState({ ...initialState, ...parsed });
+          }
         }
-    })
+      } catch (error) {
+        console.error("Failed to parse AsyncStorage item:", error);
+      }
+    })();
+  }, [key]);
 
-    useEffect(() => {
-        async () => {
-            await AsyncStorage.setItem(key, JSON.stringify(state))
-        }
-    }, [key, state])
-    
-    return [state, setState]
+  useEffect(() => {
+    AsyncStorage.setItem(key, JSON.stringify(state)).catch((error) =>
+      console.error("Failed to save to AsyncStorage:", error)
+    );
+  }, [key, state]);
+
+  return [state, setState];
 }

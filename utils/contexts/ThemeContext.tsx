@@ -1,16 +1,31 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
+import { View } from "react-native";
 import { usePersistedState } from "../hooks/usePersistedState";
+import { colorScheme } from "nativewind";
 
-const ThemeContext = createContext({});
+type theme = "dark" | "light";
+const ThemeContext = createContext<{
+  theme: {theme: theme};
+  toggleTheme: () => void;
+}>({ theme: {theme: "dark"}, toggleTheme: () => {} });
 
-export function useTheme(): any {
+export function useTheme() {
   return useContext(ThemeContext);
 }
 
-type themes = "dark" | "light";
+function ThemeContextProvider({ children }: any) {
+  const [theme, setTheme] = usePersistedState<{theme: theme}>("theme", {theme: "dark"});
+  const toggleTheme = () => {
+    const newTheme = theme.theme === "dark" ? "light" : "dark";
+    setTheme({theme: newTheme});
+    colorScheme.set(newTheme);
+  };
 
-function ThemeContextProvider({children}: any) {
-  const [theme, setTheme] = usePersistedState<themes>("theme", "light");
-  return <ThemeContext.Provider value={{theme, setTheme}}>{children}</ThemeContext.Provider>;
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <View className={`${theme.theme}`}>{children}</View>
+    </ThemeContext.Provider>
+  );
 }
 export default ThemeContextProvider;
