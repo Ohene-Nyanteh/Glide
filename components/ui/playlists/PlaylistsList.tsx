@@ -22,6 +22,7 @@ export default function PlaylistsList() {
         "SELECT * FROM playlists"
       );
 
+
       const thumbnails: thumbnails[] = await db.getAllAsync(
         "SELECT * FROM thumbnails"
       );
@@ -45,8 +46,10 @@ export default function PlaylistsList() {
 
   useEffect(() => {
     fetchPlaylists();
+    
   }, []);
 
+  
   return (
     <View className="w-full h-auto">
       <ScrollView
@@ -56,7 +59,12 @@ export default function PlaylistsList() {
       >
         {playlists.length > 0 ? (
           playlists.map((playlist, index) => (
-            <Link href={`/playlist/${playlist.id}` as any} id={playlist.id} key={index} className="mb-2">
+            <Link
+              href={`/playlist/${playlist.id}/view`}
+              id={playlist.id}
+              key={index}
+              className="mb-2"
+            >
               <View
                 key={index}
                 className="w-full flex flex-row justify-between items-center"

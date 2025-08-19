@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { View } from "react-native";
 
-function PlaylistsMedia() {
+function PlaylistLayout() {
   return (
     <View className="w-full h-full">
       <Stack
@@ -10,15 +10,15 @@ function PlaylistsMedia() {
         }}
       >
         <Stack.Screen
-          name="addPlaylist"
+          name="view"
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />
         <Stack.Screen
-          name="[id]"
+          name="addSongs"
           options={{ presentation: "modal", animation: "slide_from_bottom"}}
         />
       </Stack>
     </View>
   );
 }
-export default PlaylistsMedia;
+export default PlaylistLayout;

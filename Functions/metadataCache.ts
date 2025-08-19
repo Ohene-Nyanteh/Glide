@@ -4,7 +4,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MobilePlayer, musicDelta } from "@ohene/flow-player";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 
-const METADATA_KEY = "cachedMetadata";
 
 export async function processAndCacheMetadata(
   db: SQLiteDatabase,

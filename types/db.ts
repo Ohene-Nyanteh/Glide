@@ -14,7 +14,7 @@ export type playlists = {
 export type playlist_songs = {
     id: number;
     playlist_id: string;
-    song_id: string;
+    song_id: number;
     position: number;
 }
 

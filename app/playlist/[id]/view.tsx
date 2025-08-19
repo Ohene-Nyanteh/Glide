@@ -10,10 +10,12 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import { useSQLiteContext } from "expo-sqlite";
-import { musicDelta, PlaylistDelta } from "@ohene/flow-player";
-import { playlists } from "@/types/db";
+import { MobilePlayer, musicDelta, PlaylistDelta } from "@ohene/flow-player";
+import { playlist_songs, playlists } from "@/types/db";
 import { shortenText } from "@/lib/shortenText";
-import Sort from "@/components/General/Sort";
+import { FlashList } from "@shopify/flash-list";
+import SongRow from "@/components/General/SongRow";
+import { usePlayer } from "@/utils/contexts/PlayerContext";
 
 interface PlaylistContext {
   playlist: playlists;
@@ -23,10 +25,14 @@ interface PlaylistContext {
 
 export default function PlaylistPage() {
   const router = useRouter();
+  const playerContext = usePlayer();
   const [playlist, setPlaylist] = useState<PlaylistContext | null>(null);
+
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams();
   const { theme } = useTheme();
+  const [displayedSongs, setDisplayedSongs] = useState<musicDelta[]>([]);
+  
 
   const fetchPlaylistInfo = async () => {
     try {
@@ -36,6 +42,7 @@ export default function PlaylistPage() {
         about: string;
         name: string;
         image_data: string;
+        playlist_id: string
       } | null = await db.getFirstAsync(
         "SELECT * FROM playlists INNER JOIN thumbnails ON playlists.id = thumbnails.playlist_id WHERE playlists.id = ?",
         [id as string]
@@ -46,7 +53,7 @@ export default function PlaylistPage() {
           name: data.name,
           about: data.about,
           length: data.length,
-          id: data.id,
+          id: data.playlist_id,
         };
         setPlaylist({ playlist: formattedData, thumbnail: data.image_data });
       }
@@ -55,12 +62,28 @@ export default function PlaylistPage() {
     }
   };
 
+  const fetchPlaylistSongs = async () => {
+    try {
+      const songs: playlist_songs[] = await db.getAllAsync(
+        "SELECT * FROM playlist_songs WHERE playlist_id = ?", [id as string]
+      );
+      const song_ids = songs.map((song) => song.id);
+      const filteredSongs = playerContext?.player
+        .getSongs()
+        .filter((song) => song_ids.includes(song.id as number));
+
+      setDisplayedSongs(filteredSongs || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchPlaylistInfo();
+    fetchPlaylistSongs();
   }, [id]);
-
   return (
-    <View className="w-full h-full p-4 dark:bg-black">
+    <View className="w-full h-full p-4 dark:bg-black flex flex-col gap-0">
       <View className="flex flex-row justify-between items-center py-4">
         <Pressable onPress={() => router.back()}>
           <AntDesign
@@ -71,7 +94,7 @@ export default function PlaylistPage() {
         </Pressable>
         <Text className="dark:text-white">PLAYLIST</Text>
         <View className="flex flex-row gap-2 items-center">
-          <Pressable onPress={() => router.push("/(media-tabs)/albums")}>
+          <Pressable>
             <Entypo
               name="dots-three-vertical"
               size={20}
@@ -81,7 +104,7 @@ export default function PlaylistPage() {
         </View>
       </View>
       {playlist ? (
-        <View className="w-full h-auto">
+        <View className="w-full h-full">
           <View className="py-6 flex flex-row gap-4 h-auto">
             <View className="w-[48%] h-auto">
               {playlist.thumbnail ? (
@@ -113,8 +136,17 @@ export default function PlaylistPage() {
               {playlist.playlist.length} Songs
             </Text>
             <View className="flex gap-2 flex-row">
-              <Pressable  className="p-2 rounded-full hover:bg-gray-100/50">
-                <MaterialIcons name="playlist-add" size={25} color={theme.theme === "dark" ? "white" : "dark"}/>
+              <Pressable
+                className="p-2 rounded-full hover:bg-gray-100/50"
+                onPress={() =>
+                  router.push(`/playlist/${playlist.playlist.id}/addSongs`)
+                }
+              >
+                <MaterialIcons
+                  name="playlist-add"
+                  size={25}
+                  color={theme.theme === "dark" ? "white" : "dark"}
+                />
               </Pressable>
             </View>
           </View>
@@ -138,6 +170,22 @@ export default function PlaylistPage() {
               <Text className="dark:text-white text-sm">Play</Text>
             </Pressable>
           </View>
+          <View className="w-full h-full">
+            <FlashList
+              data={displayedSongs}
+              keyExtractor={(_, index) => index.toString()}
+              // refreshControl={
+              //   <RefreshControl refreshing={refresh} onRefresh={refreshData} />
+              // }
+              ItemSeparatorComponent={() => <View style={{ height: 3 }} />}
+              renderItem={({ item }) => <SongRow song={item} />}
+              contentContainerStyle={{
+                paddingHorizontal: 16,
+                paddingBottom: 120,
+              }}
+              estimatedItemSize={58}
+            />
+          </View>
         </View>
       ) : (
         <Text>Playlist Not Found</Text>
@@ -145,5 +193,3 @@ export default function PlaylistPage() {
     </View>
   );
 }
-
-
