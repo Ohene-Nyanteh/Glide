@@ -10,7 +10,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import { useSQLiteContext } from "expo-sqlite";
-import { MobilePlayer, musicDelta, PlaylistDelta } from "@ohene/flow-player";
+import { musicDelta } from "@ohene/flow-player";
 import { playlist_songs, playlists } from "@/types/db";
 import { shortenText } from "@/lib/shortenText";
 import { FlashList } from "@shopify/flash-list";
@@ -27,12 +27,11 @@ export default function PlaylistPage() {
   const router = useRouter();
   const playerContext = usePlayer();
   const [playlist, setPlaylist] = useState<PlaylistContext | null>(null);
-
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams();
   const { theme } = useTheme();
+  const [refresh, setRefresh] = useState(false);
   const [displayedSongs, setDisplayedSongs] = useState<musicDelta[]>([]);
-  
 
   const fetchPlaylistInfo = async () => {
     try {
@@ -42,7 +41,7 @@ export default function PlaylistPage() {
         about: string;
         name: string;
         image_data: string;
-        playlist_id: string
+        playlist_id: string;
       } | null = await db.getFirstAsync(
         "SELECT * FROM playlists INNER JOIN thumbnails ON playlists.id = thumbnails.playlist_id WHERE playlists.id = ?",
         [id as string]
@@ -65,14 +64,17 @@ export default function PlaylistPage() {
   const fetchPlaylistSongs = async () => {
     try {
       const songs: playlist_songs[] = await db.getAllAsync(
-        "SELECT * FROM playlist_songs WHERE playlist_id = ?", [id as string]
+        "SELECT * FROM playlist_songs WHERE playlist_id = ?",
+        [id as string]
       );
-      const song_ids = songs.map((song) => song.id);
-      const filteredSongs = playerContext?.player
-        .getSongs()
-        .filter((song) => song_ids.includes(song.id as number));
-
-      setDisplayedSongs(filteredSongs || []);
+      const song_ids = songs.map((song) => song.song_id);
+      const filteredSongs =
+        playerContext?.player.getSongs().filter((song) => {
+          if (song_ids.includes(song.id as number)) {
+            return song;
+          }
+        }) || [];
+      setDisplayedSongs(filteredSongs);
     } catch (e) {
       console.error(e);
     }
@@ -81,11 +83,12 @@ export default function PlaylistPage() {
   useEffect(() => {
     fetchPlaylistInfo();
     fetchPlaylistSongs();
-  }, [id]);
+  }, [id, refresh]);
+
   return (
     <View className="w-full h-full p-4 dark:bg-black flex flex-col gap-0">
-      <View className="flex flex-row justify-between items-center py-4">
-        <Pressable onPress={() => router.back()}>
+      <View className="flex flex-row justify-between items-center">
+        <Pressable onPress={() => router.push("/playlist")}>
           <AntDesign
             name="arrowleft"
             size={20}
@@ -117,8 +120,8 @@ export default function PlaylistPage() {
                   className="rounded w-full"
                 />
               ) : (
-                <View className="flex flex-row justify-center items-center w-16 h-14 rounded bg-gray-500/40">
-                  <FontAwesome name="music" size={20} color="gray" />
+                <View className="flex flex-row justify-center h-[150px] items-center w-full rounded bg-gray-500/40">
+                  <FontAwesome name="music" size={30} color="gray" />
                 </View>
               )}
             </View>
@@ -136,6 +139,16 @@ export default function PlaylistPage() {
               {playlist.playlist.length} Songs
             </Text>
             <View className="flex gap-2 flex-row">
+              <Pressable
+                className="p-2 rounded-full hover:bg-gray-100/50"
+                onPress={() => setRefresh(!refresh)}
+              >
+                <MaterialIcons
+                  name="refresh"
+                  size={25}
+                  color={theme.theme === "dark" ? "white" : "dark"}
+                />
+              </Pressable>
               <Pressable
                 className="p-2 rounded-full hover:bg-gray-100/50"
                 onPress={() =>
@@ -174,9 +187,6 @@ export default function PlaylistPage() {
             <FlashList
               data={displayedSongs}
               keyExtractor={(_, index) => index.toString()}
-              // refreshControl={
-              //   <RefreshControl refreshing={refresh} onRefresh={refreshData} />
-              // }
               ItemSeparatorComponent={() => <View style={{ height: 3 }} />}
               renderItem={({ item }) => <SongRow song={item} />}
               contentContainerStyle={{

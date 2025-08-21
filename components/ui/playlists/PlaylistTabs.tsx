@@ -28,7 +28,7 @@ export default function PlaylistTabs() {
   ];
 
   return (
-    <View className="w-full h-auto flex flex-row flex-wrap gap-4">
+    <View className="w-full h-auto flex flex-row flex-wrap gap-3">
       {tabs.map((tab, index) => (
         <View key={index} className={`w-[48%] h-32 relative`}>
 

@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { usePersistedState } from "../hooks/usePersistedState";
 import { colorScheme } from "nativewind";
 
-type theme = "dark" | "light";
+export type theme = "dark" | "light";
 const ThemeContext = createContext<{
   theme: {theme: theme};
   toggleTheme: () => void;

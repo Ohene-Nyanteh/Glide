@@ -7,6 +7,7 @@ import { Text, View } from "react-native";
 import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { useFonts } from "expo-font";
 import { SQLiteDatabase } from "expo-sqlite";
+import { settings } from "@/types/db";
 
 export default function LoadingScreen({
   setInitialLoad,
@@ -27,22 +28,52 @@ export default function LoadingScreen({
     ...FontAwesome.font,
   });
 
-  useEffect(() => {
-    const loading = async () => {
-      const player = new MobilePlayer([]);
-      const songs = await useLoadSongs(player, db, setCurrentCount, setTotalCount);
-      if (songs) {
-        const newPlayer = new MobilePlayer(songs.content);
-        PlayerObject?.setPlayer(newPlayer);
-        PlayerObject?.setIsloading(false);
-        setInitialLoad(false);
-      } else {
-        setError("Something Happened");
+  const loading = async () => {
+    const player = new MobilePlayer([]);
+    const songs = await useLoadSongs(
+      player,
+      db,
+      setCurrentCount,
+      setTotalCount
+    );
+    if (songs) {
+      const newPlayer = new MobilePlayer(songs.content);
+      PlayerObject?.setPlayer(newPlayer);
+      PlayerObject?.setIsloading(false);
+      setInitialLoad(false);
+    } else {
+      setError("Something Happened");
+    }
+  };
+
+  const initialSettings = async () => {
+    const res: settings | null = await db.getFirstAsync(
+      "SELECT * FROM settings"
+    );
+    if (!res) {
+      const defaultSettings: settings = {
+        currentPlayingID: null,
+        repeat: "none",
+        shuffle: false,
+        id: 0,
+      };
+      try {
+        await db.runAsync(
+          "INSERT INTO settings (repeat, shuffle, currentPlayingID) VALUES (?, ?, ?)",
+          [
+            defaultSettings.repeat,
+            defaultSettings.shuffle,
+            defaultSettings.currentPlayingID,
+          ]
+        );
+      } catch (e) {
+        console.error(e);
       }
-    };
-
+    }
+  };
+  useEffect(() => {
     loading();
-
+    initialSettings();
     if (fontError) {
       setError("Couldn't Load Font");
     }

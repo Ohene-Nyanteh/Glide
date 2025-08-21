@@ -10,10 +10,12 @@ import Header from "@/components/General/Header";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useColorScheme, View } from "react-native";
 import LoadingScreen from "@/components/General/LoadingScreen";
+import { StyleSheet, Platform, StatusBar } from "react-native";
 import DatabaseContextProvider from "@/utils/contexts/DatabaseContext";
 import { useSQLiteContext } from "expo-sqlite";
 import UserContextProvider, { useUser } from "@/utils/contexts/UserContext";
 import "react-native-get-random-values";
+import Toast from "@amitsolanki1409/react-native-toast-message";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -34,16 +36,25 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const style = StyleSheet.create({
+    AndroidSafeArea: {
+      paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    },
+  });
   return (
-    <View className="w-full h-full relative bg-white dark:bg-black">
+    <View
+      className="w-full h-full relative bg-white dark:bg-black"
+      style={style.AndroidSafeArea}
+    >
       <SafeAreaProvider>
         <Stack
           screenOptions={{
-           headerShown: false,
+            headerShown: false,
           }}
         >
           <Stack.Screen name="(media-tabs)" />
           <Stack.Screen name="playlist" />
+          <Stack.Screen name="playMedia" />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         </Stack>
       </SafeAreaProvider>
@@ -79,6 +90,7 @@ function RootWrapper() {
           <RootLayoutNav />
         </View>
       </UserContextProvider>
+      <Toast.ToastContainer />
     </ThemeContextProvider>
   );
 }

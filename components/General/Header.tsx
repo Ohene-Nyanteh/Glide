@@ -18,7 +18,7 @@ function Header() {
   const { user } = useUser();
 
   return (
-    <View style={style.AndroidSafeArea} className={`w-full`}>
+    <View className={`w-full`}>
       <View className="flex dark:text-black flex-row justify-between w-full p-5 dark:bg-black">
         <Feather
           name="menu"
@@ -43,9 +43,5 @@ function Header() {
   );
 }
 
-const style = StyleSheet.create({
-  AndroidSafeArea: {
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-  },
-});
+
 export default Header;

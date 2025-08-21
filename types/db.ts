@@ -11,6 +11,13 @@ export type playlists = {
     length: number
 }
 
+export type settings = {
+    repeat: "all" | "single" | "none" | "repeatBy",
+    shuffle: boolean,
+    currentPlayingID: number | null,
+    id: number
+}
+
 export type playlist_songs = {
     id: number;
     playlist_id: string;

@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TextInput } from "react-native";
+import { View, Text, Pressable, TextInput, Modal } from "react-native";
 import React, { useEffect, useState } from "react";
 import { FlashList } from "@shopify/flash-list";
 import { MobilePlayer, musicDelta } from "@ohene/flow-player";
@@ -14,6 +14,7 @@ import { music } from "@/types/music";
 export default function AddSongs() {
   const PlayerContext = usePlayer();
   const { id } = useLocalSearchParams();
+  const [show, setShow] = useState(false);
   const { theme } = useTheme();
   const db = useSQLiteContext();
   const player = new MobilePlayer(PlayerContext?.player.getSongs() || []);
@@ -23,12 +24,17 @@ export default function AddSongs() {
   const getPlaylistsSongsId = async () => {
     try {
       const res: playlist_songs[] = await db.getAllAsync(
-        "SELECT * FROM playlist_songs",
+        "SELECT * FROM playlist_songs WHERE playlist_id = ?",
         [id as string]
       );
       const songs_id = res.map((songs) => songs.song_id);
-      setAddedSongs(songs_id);
-      setDisplayedSongs(player.getSongs());
+      setDisplayedSongs(
+        player.getSongs().filter((song) => {
+          if (!songs_id.includes(song.id as number)) {
+            return song;
+          }
+        })
+      );
     } catch (e) {
       console.error(e);
     }
@@ -38,10 +44,20 @@ export default function AddSongs() {
     try {
       addedSongs.forEach(async (song, index) => {
         try {
-          await db.runAsync(
-            "INSERT INTO playlist_songs (playlist_id, song_id, position) VALUES (?, ?, ?)",
-            [id as string, song, index]
+          //check if song already exists in db
+          const exists: playlist_songs | null = await db.getFirstAsync(
+            "SELECT playlist_id, song_id, position FROM playlist_songs WHERE playlist_id = ? AND song_id = ?",
+            [id as string, song]
           );
+          if (exists) {
+            setShow(true);
+          } else {
+            // add song
+            await db.runAsync(
+              "INSERT INTO playlist_songs (playlist_id, song_id, position) VALUES (?, ?, ?);",
+              [id as string, song, index]
+            );
+          }
         } catch (e) {
           console.error(e);
         }
@@ -81,6 +97,20 @@ export default function AddSongs() {
 
   return (
     <View className="w-full dark:bg-black h-full overflow-y-auto p-4 flex flex-col gap-4">
+      {show && (
+        <Modal className="w-full" transparent>
+          <View className="w-full h-screen bg-transparent flex flex-row items-center justify-center">
+            <View className="p-4 rounded bg-gray-200 dark:bg-gray-800 flex flex-col gap-3 items-center w-48">
+              <Text className="dark:text-white">Song Already Exists</Text>
+              <Pressable onPress={() => setShow(false)}>
+                <Text className="dark:text-white p-4 py-1 bg-blue-600 rounded">
+                  Close
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      )}
       <View className="flex flex-row items-center justify-between">
         <Pressable onPress={() => router.back()}>
           <AntDesign
@@ -107,27 +137,33 @@ export default function AddSongs() {
         />
       </View>
       <View className="w-full h-full">
-        <FlashList
-          data={displayedSongs}
-          keyExtractor={(_, index) => index.toString()}
-          // refreshControl={
-          //   <RefreshControl refreshing={refresh} onRefresh={refreshData} />
-          // }
-          ItemSeparatorComponent={() => <View style={{ height: 3 }} />}
-          renderItem={({ item }) => (
-            <SelectedSongRow
-              added={addedSongs.includes(item?.id as number)}
-              song={item}
-              onAdd={add}
-              onRemove={remove}
-            />
-          )}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: 120,
-          }}
-          estimatedItemSize={58}
-        />
+        {displayedSongs.length > 0 ? (
+          <FlashList
+            data={displayedSongs}
+            keyExtractor={(_, index) => index.toString()}
+            // refreshControl={
+            //   <RefreshControl refreshing={refresh} onRefresh={refreshData} />
+            // }
+            ItemSeparatorComponent={() => <View style={{ height: 3 }} />}
+            renderItem={({ item }) => (
+              <SelectedSongRow
+                added={addedSongs.includes(item?.id as number)}
+                song={item}
+                onAdd={add}
+                onRemove={remove}
+              />
+            )}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingBottom: 120,
+            }}
+            estimatedItemSize={58}
+          />
+        ) : (
+          <View>
+            <Text className="dark:text-white text-center">No Songs Available</Text>
+          </View>
+        )}
       </View>
     </View>
   );
