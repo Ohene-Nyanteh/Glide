@@ -1,16 +1,15 @@
 import { shortenText } from "@/lib/shortenText";
 import { music } from "@/types/music";
-import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { FontAwesome, Entypo } from "@expo/vector-icons";
 import type { musicDelta } from "@ohene/flow-player";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { memo, useCallback, useEffect, useState } from "react";
 import { Image, View, Text, Pressable } from "react-native";
-import ThemeChanger from "./ThemeChanger";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 
 function SongRow({ song }: { song: musicDelta }) {
   const [imageError, setImageError] = useState(false);
+  const { theme } = useTheme();
   const [metadata, setMetadata] = useState<musicDelta["metadata"] | music>({
     name: "",
     album: "",
@@ -36,7 +35,7 @@ function SongRow({ song }: { song: musicDelta }) {
   return (
     <Pressable
       className="flex flex-row justify-between items-center w-full rounded"
-      onPress={() => router.push(`/playMedia/${song?.id as number}` as any)}
+      onPress={() => router.navigate(`/playMedia/${song?.id as number}` as any)}
     >
       <View className="flex flex-row gap-2">
         {metadata?.image ? (
@@ -59,7 +58,10 @@ function SongRow({ song }: { song: musicDelta }) {
           </View>
         )}
         <View className="flex flex-col justify-center gap-1">
-          <Text className="font-semibold dark:text-white ">
+          <Text
+            className="font-semibold dark:text-white "
+            style={{ color: song.isPlaying ? "blue" : theme.theme === "dark" ? "white" : "black" }}
+          >
             {shortenText(metadata?.name || "", 40) ||
               shortenText((song.file_name as string) || "", 30)}
           </Text>

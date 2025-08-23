@@ -1,8 +1,8 @@
-import { View, Text, Pressable, Image, Modal } from "react-native";
-import React, { useEffect, useState } from "react";
-import Slider from "@react-native-community/slider";
+import { View, Text, Pressable, Image } from "react-native";
+import React, { use, useCallback, useEffect, useState } from "react";
+import { Slider } from "@miblanchard/react-native-slider";
 import { router, useLocalSearchParams } from "expo-router";
-import { theme, useTheme } from "@/utils/contexts/ThemeContext";
+import { useTheme } from "@/utils/contexts/ThemeContext";
 import {
   AntDesign,
   Entypo,
@@ -10,20 +10,32 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
-import { musicDelta } from "@ohene/flow-player";
-import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
-import { settings, songs } from "@/types/db";
+import { Delta, MobilePlayer, musicDelta } from "@ohene/flow-player";
+import { useSQLiteContext } from "expo-sqlite";
+import { songs } from "@/types/db";
+import { AudioStatus, useAudioPlayer } from "expo-audio";
 import { shortenText } from "@/lib/shortenText";
 import { formatTime } from "@/lib/formatTime";
-import Toast from "@amitsolanki1409/react-native-toast-message";
+import { toast } from "@backpackapp-io/react-native-toast";
+import ShuffleButton from "@/components/ui/playMedia/ShuffleButton";
+import RepeatButton from "@/components/ui/playMedia/RepeatButton";
+import PlayButton from "@/components/ui/playMedia/PlayButtons";
+import { useSettings } from "@/utils/contexts/SettingsContext";
+import { useAudioPlayerContext } from "@/utils/contexts/AudioContext";
+import { usePlayer } from "@/utils/contexts/PlayerContext";
 
 export default function PlaySongPage() {
   const { id } = useLocalSearchParams();
+  const audioPlayerContext = useAudioPlayerContext();
+  const player = audioPlayerContext?.player;
   const db = useSQLiteContext();
   const { theme } = useTheme();
+  const playerContext = usePlayer();
+  const songs = playerContext?.queue?.getSongs();
   const [song, setSong] = useState<musicDelta | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [imageError, setImageError] = useState(false);
-  const [durationPercentage, setDurationPercentage] = useState(20);
+  const settingsContext = useSettings();
   const [durationObject, setDurationObject] = useState<{
     currentDuration: number;
     totalDuration: number;
@@ -32,15 +44,6 @@ export default function PlaySongPage() {
     totalDuration: 0,
   });
 
-// Toast.show({
-//   message: "Custom styled toast",
-//   title: "Notice",
-//   type: "info",
-//   titleStyle: { fontSize: 20, fontWeight: "bold" },
-//   messageStyle: { color: "#333" },
-//   containerStyle: { borderWidth: 2, borderColor: "#000" },
-//   alertColor: "#0af", // overrides icon background color
-// });
   const fetchSongInfo = async () => {
     try {
       const songInfo: songs | null = await db.getFirstAsync(
@@ -61,31 +64,209 @@ export default function PlaySongPage() {
             duration: songInfo.duration,
             image: songInfo.image,
           },
+          isPlaying: true,
+        });
+
+        if (songs) {
+          playerContext?.setQueue(
+            new Delta(
+              songs?.map((p_song) => {
+                if (p_song.id === songInfo.id) {
+                  return { ...p_song, isPlaying: true };
+                }
+                return { ...p_song, isPlaying: false };
+              })
+            )
+          );
+          playerContext?.setPlayer(
+            new MobilePlayer(
+               playerContext.player.getSongs()?.map((p_song) => {
+                if (p_song.id === songInfo.id) {
+                  return { ...p_song, isPlaying: true };
+                }
+                return { ...p_song, isPlaying: false };
+              })
+            )
+          );
+        }
+
+        if (settingsContext?.settings.currentPlayingID !== songInfo.id) {
+          player?.replace(songInfo.music_path);
+          settingsContext?.insertSettings({
+            id: settingsContext.settings.id,
+            shuffle: settingsContext.settings.shuffle,
+            repeat: settingsContext.settings.repeat,
+            currentPlayingID: songInfo.id,
+          });
+        }
+        setIsPlaying(true);
+        setDurationObject({
+          currentDuration: 0,
+          totalDuration: songInfo.duration ?? 0,
         });
       }
     } catch (error) {
-      console.error("Error");
+      toast.error("Error: Couldn't fetch song");
     }
   };
 
-  const setDurationInfo = () => {
-    if (song?.metadata?.duration) {
-      setDurationObject({
-        currentDuration: 0,
-        totalDuration: song.metadata.duration,
-      });
-    }
+  const seekToPlay = (value: number[]) => {
+    setDurationObject((prev) => ({
+      ...prev,
+      currentDuration: value[0],
+    }));
+    player?.seekTo(value[0]);
   };
+
+  const handlePlaybackStatusUpdate = useCallback(
+    (status: AudioStatus) => {
+      if (status.didJustFinish) {
+        if (songs) {
+          switch (settingsContext?.settings.repeat) {
+            case "single":
+              player?.seekTo(0);
+              setDurationObject({
+                currentDuration: 0,
+                totalDuration: status.duration ? status.duration : 0,
+              });
+              playerContext?.setQueue(
+                new Delta(
+                  songs.map((p_song) => {
+                    if (p_song.id === song?.id) {
+                      return { ...p_song, isPlaying: true };
+                    }
+
+                    return { ...p_song, isPlaying: false };
+                  })
+                )
+              );
+              playerContext?.setPlayer(
+                new MobilePlayer(
+                   playerContext.player.getSongs()?.map((p_song) => {
+                    if (p_song.id === song?.id) {
+                      return { ...p_song, isPlaying: true };
+                    }
+
+                    return { ...p_song, isPlaying: false };
+                  })
+                )
+              );
+              player?.play();
+              break;
+
+            case "none":
+              if (!(song?.id !== songs?.length - 1)) {
+                const song_id = song?.id ?? 0;
+                playerContext?.setQueue(
+                  new Delta(
+                    songs.map((p_song) => {
+                      if (p_song.id === song_id + 1) {
+                        return { ...p_song, isPlaying: true };
+                      } else {
+                        return { ...p_song, isPlaying: false };
+                      }
+                    })
+                  )
+                );
+                playerContext?.setPlayer(
+                  new MobilePlayer(
+                     playerContext.player.getSongs()?.map((p_song) => {
+                      if (p_song.id === song_id + 1) {
+                        return { ...p_song, isPlaying: true };
+                      }
+
+                      return { ...p_song, isPlaying: false };
+                    })
+                  )
+                );
+
+                router.setParams({ id: songs[song_id + 1].id });
+              } else {
+                player?.pause();
+                setDurationObject({
+                  currentDuration: 0,
+                  totalDuration: status.duration ? status.duration : 0,
+                });
+                setIsPlaying(false);
+              }
+              break;
+
+            default:
+              if (song?.id !== songs?.length - 1) {
+                const song_id = song?.id ?? 0;
+                playerContext?.setQueue(
+                  new Delta(
+                    songs.map((p_song) => {
+                      if (p_song.id === song_id + 1) {
+                        return { ...p_song, isPlaying: true };
+                      } else {
+                        return { ...p_song, isPlaying: false };
+                      }
+                    })
+                  )
+                );
+                playerContext?.setPlayer(
+                  new MobilePlayer(
+                     playerContext.player.getSongs()?.map((p_song) => {
+                      if (p_song.id === song_id + 1) {
+                        return { ...p_song, isPlaying: true };
+                      }
+
+                      return { ...p_song, isPlaying: false };
+                    })
+                  )
+                );
+                router.setParams({ id: songs[song_id + 1].id });
+              } else {
+                playerContext?.setQueue(
+                  new Delta(
+                    songs.map((p_song) => {
+                      if (p_song.id === 0) {
+                        return { ...p_song, isPlaying: true };
+                      } else {
+                        return { ...p_song, isPlaying: false };
+                      }
+                    })
+                  )
+                );
+                router.setParams({ id: songs[0].id });
+              }
+          }
+        }
+      }
+
+      if (status.isLoaded) {
+        setDurationObject({
+          currentDuration: status.currentTime,
+          totalDuration: status.duration ? status.duration : 0,
+        });
+        setIsPlaying(status.playing);
+      }
+    },
+    [settingsContext?.settings.repeat]
+  );
 
   useEffect(() => {
     fetchSongInfo();
-    setDurationInfo();
   }, [id]);
+
+  useEffect(() => {
+    const subscription = player?.addListener(
+      "playbackStatusUpdate",
+      handlePlaybackStatusUpdate
+    );
+
+    return () => subscription?.remove();
+  }, [handlePlaybackStatusUpdate]);
 
   return (
     <View className="w-full h-full dark:bg-black p-4">
       <View className="flex flex-row justify-between items-center">
-        <Pressable onPress={() => router.back()}>
+        <Pressable
+          onPress={() => {
+            router.back();
+          }}
+        >
           <AntDesign
             name="arrowleft"
             size={20}
@@ -94,8 +275,8 @@ export default function PlaySongPage() {
         </Pressable>
         <View>
           <Text className="text-gray-400 text-xs text-center">Now Playing</Text>
-          <Text className="dark:text- text-center text-sm">
-            {shortenText(song?.metadata?.name ?? "Unknown Song", 20)}
+          <Text className="dark:text-white text-center text-sm">
+            {shortenText(song?.metadata?.name ?? "Unknown Song", 40)}
           </Text>
         </View>
 
@@ -151,11 +332,12 @@ export default function PlaySongPage() {
               <View className="w-full h-2 relative">
                 <View className="w-full h-2 rounded bg-gray">
                   <Slider
-                    style={{ width: "100%", height: 8, backgroundColor: "gray" }}
+                    value={durationObject.currentDuration}
+                    onValueChange={(value) => seekToPlay(value)}
                     minimumValue={0}
-                    tapToSeek
-                    maximumValue={1}
+                    maximumValue={durationObject.totalDuration}
                     minimumTrackTintColor="blue"
+                    thumbTintColor="blue"
                     maximumTrackTintColor="gray"
                   />
                 </View>
@@ -165,32 +347,19 @@ export default function PlaySongPage() {
                   {formatTime(durationObject.currentDuration)}
                 </Text>
                 <Text className="text-sm dark:text-gray-200">
-                  {formatTime(durationObject.totalDuration)}
+                  {formatTime(song.metadata?.duration || 0)}
                 </Text>
               </View>
               <View className="flex w-full flex-row justify-between px-6 items-center">
                 <ShuffleButton themeProvider={theme} db={db} />
-                <Pressable>
-                  <AntDesign
-                    name="stepbackward"
-                    size={30}
-                    color={theme.theme === "dark" ? "white" : "black"}
-                  />
-                </Pressable>
-                <Pressable>
-                  <AntDesign
-                    name="play"
-                    size={60}
-                    color={theme.theme === "dark" ? "white" : "black"}
-                  />
-                </Pressable>
-                <Pressable>
-                  <AntDesign
-                    name="stepforward"
-                    size={30}
-                    color={theme.theme === "dark" ? "white" : "black"}
-                  />
-                </Pressable>
+                <PlayButton
+                  playing={isPlaying}
+                  player={player}
+                  themeProvider={theme}
+                  setIsPlaying={setIsPlaying}
+                  setSong={setSong}
+                  song={song}
+                />
                 <RepeatButton db={db} themeProvider={theme} />
               </View>
               <View className="w-full h-auto flex flex-row justify-between py-3 px-16">
@@ -226,111 +395,3 @@ export default function PlaySongPage() {
     </View>
   );
 }
-
-const RepeatButton = ({
-  themeProvider,
-  db,
-}: {
-  themeProvider: { theme: theme };
-  db: SQLiteDatabase;
-}) => {
-  const [repeat, setRepeat] = useState<settings["repeat"]>("none");
-  const getRepeatInfo = async () => {
-    const res: { repeat: settings["repeat"] } | null = await db.getFirstAsync(
-      "SELECT repeat FROM settings"
-    );
-    if (res) {
-      setRepeat(res.repeat);
-    }
-  };
-
-  useEffect(() => {
-    getRepeatInfo();
-  }, []);
-
-  if (repeat == "none") {
-    return (
-      <Pressable onPress={() => setRepeat("all")}>
-        <MaterialIcons
-          name="repeat"
-          size={25}
-          color={themeProvider.theme === "dark" ? "white" : "black"}
-        />
-      </Pressable>
-    );
-  }
-
-  if (repeat == "all") {
-    return (
-      <Pressable onPress={() => setRepeat("single")}>
-        <MaterialIcons name="repeat" size={25} color={"blue"} />
-      </Pressable>
-    );
-  }
-
-  if (repeat === "single") {
-    return (
-      <Pressable onPress={() => setRepeat("repeatBy")}>
-        <MaterialIcons name="repeat-one" size={25} color={"blue"} />
-      </Pressable>
-    );
-  }
-
-  if (repeat === "repeatBy") {
-    return (
-      <>
-        <Pressable
-          onPressOut={() => setRepeat("none")}
-          delayLongPress={3000}
-          className="flex flex-row items-center gap-1"
-        >
-          <MaterialIcons name="repeat-one" size={25} color={"blue"} />
-          <AntDesign name="caretdown" size={12} color={"blue"} />
-        </Pressable>
-      </>
-    );
-  }
-
-  return (
-    <Pressable>
-      <MaterialIcons
-        name="repeat"
-        size={25}
-        color={themeProvider.theme === "dark" ? "white" : "black"}
-      />
-    </Pressable>
-  );
-};
-
-const ShuffleButton = ({
-  themeProvider,
-  db,
-}: {
-  themeProvider: { theme: theme };
-  db: SQLiteDatabase;
-}) => {
-  const [shuffle, setshuffle] = useState<boolean>(false);
-  const getShuffleInfoFromDB = async () => {
-    const res: { shuffled: settings["shuffle"] } | null =
-      await db.getFirstAsync("SELECT shuffle FROM settings");
-    if (res) {
-      setshuffle(res.shuffled);
-    }
-  };
-
-  useEffect(() => {
-    getShuffleInfoFromDB();
-  }, []);
-
-  return (
-    <Pressable onPress={() => setshuffle(!shuffle)}>
-      <MaterialIcons
-        name="shuffle"
-        size={25}
-        color={
-          shuffle ? "blue" : themeProvider.theme === "dark" ? "white" : "black"
-        }
-      />
-    </Pressable>
-  );
-};

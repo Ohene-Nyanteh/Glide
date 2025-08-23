@@ -63,7 +63,7 @@ export default function AddSongs() {
         }
       });
 
-      router.push(`/playlist/${id as string}/view`);
+      router.navigate(`/playlist/${id as string}/view`);
     } catch (e) {
       console.error(e);
     }
@@ -141,9 +141,6 @@ export default function AddSongs() {
           <FlashList
             data={displayedSongs}
             keyExtractor={(_, index) => index.toString()}
-            // refreshControl={
-            //   <RefreshControl refreshing={refresh} onRefresh={refreshData} />
-            // }
             ItemSeparatorComponent={() => <View style={{ height: 3 }} />}
             renderItem={({ item }) => (
               <SelectedSongRow

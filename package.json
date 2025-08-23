@@ -13,8 +13,9 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@amitsolanki1409/react-native-toast-message": "^1.0.1",
+    "@backpackapp-io/react-native-toast": "^0.14.0",
     "@expo/vector-icons": "^14.1.0",
+    "@miblanchard/react-native-slider": "^2.6.0",
     "@ohene/flow-player": "^1.1.1",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/slider": "4.5.6",
@@ -40,7 +41,7 @@
     "react-native": "0.79.5",
     "react-native-get-random-values": "^1.11.0",
     "react-native-reanimated": "~3.17.4",
-    "react-native-safe-area-context": "^5.4.0",
+    "react-native-safe-area-context": "^5.6.1",
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",

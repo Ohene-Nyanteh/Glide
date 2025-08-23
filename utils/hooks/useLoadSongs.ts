@@ -1,6 +1,4 @@
 import { checkStorage } from "@/Functions/checkStorage";
-import clearDB from "@/Functions/clearDB";
-import { createStorageFile } from "@/Functions/createStorageFile";
 import { mediaPermissionsRequest } from "@/Functions/mediaPermissionsRequest";
 import { processAndCacheMetadata } from "@/Functions/metadataCache";
 import { musicDB } from "@/types/music";

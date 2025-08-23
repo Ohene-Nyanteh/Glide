@@ -1,9 +1,11 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import { MobilePlayer, type musicDelta } from "@ohene/flow-player";
+import { Delta, MobilePlayer } from "@ohene/flow-player";
 
 const PlayerContext = createContext<{
   player: MobilePlayer;
   isloading: boolean;
+  queue: Delta;
+  setQueue: (queue: Delta) => void;
   setPlayer: (player: MobilePlayer) => void;
   setIsloading: (isloading: boolean) => void;
 } | null>(null);
@@ -11,6 +13,8 @@ const PlayerContext = createContext<{
 export function usePlayer(): {
   player: MobilePlayer;
   isloading: boolean;
+  queue: Delta;
+  setQueue: (queue: Delta) => void;
   setPlayer: (player: MobilePlayer) => void;
   setIsloading: (isloading: boolean) => void;
 } | null {
@@ -19,11 +23,12 @@ export function usePlayer(): {
 
 function PlayerContextProvider({ children }: any) {
   const [player, setPlayer] = useState<MobilePlayer>(new MobilePlayer([]));
+  const [queue, setQueue] = useState<Delta>(new Delta([]));
   const [isloading, setIsloading] = useState<boolean>(true);
 
   const value = useMemo(
-    () => ({ player, isloading, setPlayer, setIsloading }),
-    [player, isloading]
+    () => ({ player, isloading, setPlayer, setIsloading, queue, setQueue }),
+    [player, isloading, queue]
   );
 
   return (

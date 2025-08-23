@@ -75,14 +75,14 @@ export default function addPlaylist() {
       }
       Alert.alert("Playlist Created", "Playlist Created Successfully");
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
   return (
     <View className="w-full h-full dark:bg-black p-4">
       <View className="flex flex-row items-center justify-between">
-        <Pressable onPress={()=> router.back()}>
+        <Pressable onPress={() => router.back()}>
           <AntDesign
             name="arrowleft"
             size={20}

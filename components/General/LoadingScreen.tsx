@@ -1,7 +1,7 @@
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import useLoadSongs from "@/utils/hooks/useLoadSongs";
 import { Feather, FontAwesome } from "@expo/vector-icons";
-import { MobilePlayer, musicDelta } from "@ohene/flow-player";
+import { Delta, MobilePlayer, musicDelta } from "@ohene/flow-player";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { usePlayer } from "@/utils/contexts/PlayerContext";
@@ -39,7 +39,9 @@ export default function LoadingScreen({
     if (songs) {
       const newPlayer = new MobilePlayer(songs.content);
       PlayerObject?.setPlayer(newPlayer);
-      PlayerObject?.setIsloading(false);
+     
+      PlayerObject?.setQueue(new Delta(newPlayer.getSongs()));
+       PlayerObject?.setIsloading(false);
       setInitialLoad(false);
     } else {
       setError("Something Happened");

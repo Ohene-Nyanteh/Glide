@@ -88,7 +88,7 @@ export default function PlaylistPage() {
   return (
     <View className="w-full h-full p-4 dark:bg-black flex flex-col gap-0">
       <View className="flex flex-row justify-between items-center">
-        <Pressable onPress={() => router.push("/playlist")}>
+        <Pressable onPress={() => router.navigate("/playlist")}>
           <AntDesign
             name="arrowleft"
             size={20}
@@ -152,7 +152,7 @@ export default function PlaylistPage() {
               <Pressable
                 className="p-2 rounded-full hover:bg-gray-100/50"
                 onPress={() =>
-                  router.push(`/playlist/${playlist.playlist.id}/addSongs`)
+                  router.navigate(`/playlist/${playlist.playlist.id}/addSongs`)
                 }
               >
                 <MaterialIcons

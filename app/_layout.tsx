@@ -3,19 +3,20 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "@/global.css";
-import ThemeContextProvider, { useTheme } from "@/utils/contexts/ThemeContext";
-import { colorScheme } from "nativewind";
+import ThemeContextProvider from "@/utils/contexts/ThemeContext";
 import PlayerContextProvider from "@/utils/contexts/PlayerContext";
-import Header from "@/components/General/Header";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useColorScheme, View } from "react-native";
+import { Dimensions, View } from "react-native";
 import LoadingScreen from "@/components/General/LoadingScreen";
 import { StyleSheet, Platform, StatusBar } from "react-native";
 import DatabaseContextProvider from "@/utils/contexts/DatabaseContext";
 import { useSQLiteContext } from "expo-sqlite";
-import UserContextProvider, { useUser } from "@/utils/contexts/UserContext";
+import UserContextProvider from "@/utils/contexts/UserContext";
 import "react-native-get-random-values";
-import Toast from "@amitsolanki1409/react-native-toast-message";
+import { Toasts } from "@backpackapp-io/react-native-toast";
+import SettingsContextProvider from "@/utils/contexts/SettingsContext";
+import AudioContextProvider from "@/utils/contexts/AudioContext";
+import SongMiniModal from "@/components/General/SongMiniModal";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -86,11 +87,15 @@ function RootWrapper() {
   return (
     <ThemeContextProvider>
       <UserContextProvider>
-        <View className={`w-full h-full relative`}>
-          <RootLayoutNav />
-        </View>
+        <SettingsContextProvider>
+          <AudioContextProvider>
+            <View className={`w-full h-full relative`}>
+              <RootLayoutNav />
+            </View>
+          </AudioContextProvider>
+        </SettingsContextProvider>
       </UserContextProvider>
-      <Toast.ToastContainer />
+      <Toasts />
     </ThemeContextProvider>
   );
 }
