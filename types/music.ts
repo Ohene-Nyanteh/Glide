@@ -12,6 +12,7 @@ export type music = {
 export type musicDB = {
   id: number;
   music_path: string;
+  favourite: number;
   file_name: string;
   name: string;
   album: string;

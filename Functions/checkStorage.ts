@@ -11,6 +11,7 @@ export const checkStorage = async (db: SQLiteDatabase) => {
           music_path: song.music_path,
           duration: song.duration,
           file_name: song.music_path,
+          isFavorite: song.favourite === 1  ? true : false,
           id: song.id,
           metadata: {
             name: song.name,

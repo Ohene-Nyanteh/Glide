@@ -90,7 +90,7 @@ export default function PlaylistPage() {
       <View className="flex flex-row justify-between items-center">
         <Pressable onPress={() => router.navigate("/playlist")}>
           <AntDesign
-            name="arrowleft"
+            name="arrow-left"
             size={20}
             color={theme.theme === "dark" ? "white" : "black"}
           />
@@ -193,7 +193,6 @@ export default function PlaylistPage() {
                 paddingHorizontal: 16,
                 paddingBottom: 120,
               }}
-              estimatedItemSize={58}
             />
           </View>
         </View>

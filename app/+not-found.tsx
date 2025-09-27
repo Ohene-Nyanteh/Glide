@@ -1,4 +1,6 @@
-import { Link, Stack } from 'expo-router';
+import { useRoute } from '@react-navigation/native';
+import { Link, router, Stack, usePathname, useRouter, useSitemap } from 'expo-router';
+import { useLocalSearchParams, useSearchParams } from 'expo-router/build/hooks';
 import { StyleSheet } from 'react-native';
 
 import { Text, View } from 'react-native';

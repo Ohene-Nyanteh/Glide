@@ -84,7 +84,7 @@ export default function addPlaylist() {
       <View className="flex flex-row items-center justify-between">
         <Pressable onPress={() => router.back()}>
           <AntDesign
-            name="arrowleft"
+            name="arrow-left"
             size={20}
             color={theme.theme === "dark" ? "white" : "black"}
           />

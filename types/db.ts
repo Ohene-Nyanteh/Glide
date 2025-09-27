@@ -35,6 +35,8 @@ export type songs = {
     id: number;
     file_name: string;
     music_path: string;
+    favourite: number;
+    lyrics: string;
     name: string;
     album: string;
     artist: string;

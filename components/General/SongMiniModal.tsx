@@ -4,6 +4,7 @@ import {
   Image,
   Pressable,
   GestureResponderEvent,
+  Modal,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useSettings } from "@/utils/contexts/SettingsContext";
@@ -14,22 +15,21 @@ import { router } from "expo-router";
 import { shortenText } from "@/lib/shortenText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/utils/contexts/ThemeContext";
-import { useAudioPlayerContext } from "@/utils/contexts/AudioContext";
 import { songs } from "@/types/db";
 import { useSQLiteContext } from "expo-sqlite";
+import { useAudioPlayerContext } from "@/utils/contexts/AudioContext";
 
 export default function SongMiniModal() {
   const settingsContext = useSettings();
   const playerContext = usePlayer();
   const db = useSQLiteContext();
-
+  const { player } = useAudioPlayerContext();
   const currentPlayingSong = playerContext?.queue
     .getSongs()
     .find((song) => song.id === settingsContext?.settings.currentPlayingID);
   const [song, setSong] = useState<musicDelta>();
   const [imageError, setImageError] = useState(false);
   const { theme } = useTheme();
-  const { player } = useAudioPlayerContext();
   const insets = useSafeAreaInsets();
   const currentPlayingID = settingsContext?.settings.currentPlayingID;
 
@@ -80,28 +80,8 @@ export default function SongMiniModal() {
     }
   };
 
-  const getCurrentPlayingSong = async () => {
-    if (
-      typeof currentPlayingID === "number" &&
-      typeof currentPlayingID !== "object" &&
-      typeof currentPlayingID !== "undefined"
-    ) {
-      const currentPlayingSong: songs | null = await db.getFirstAsync(
-        "SELECT * FROM songs WHERE id = ?",
-        [currentPlayingID]
-      );
-
-      if (currentPlayingSong) {
-        if (!player?.currentStatus.playing) {
-          player?.replace(currentPlayingSong.music_path);
-        }
-      }
-    }
-  };
-
   useEffect(() => {
     setSong(currentPlayingSong);
-    getCurrentPlayingSong();
   }, [currentPlayingID]);
 
   return (

@@ -9,14 +9,13 @@ import { View } from "react-native";
 function TabLayout() {
   return (
     <View className="w-full h-full relative dark:bg-black bg-white">
+      <View className="w-full">
+        <Header />
+        <TabsComponent />
+      </View>
       <Stack
         screenOptions={{
-          header: () => (
-            <View className="w-full">
-              <Header />
-              <TabsComponent />
-            </View>
-          ),
+          headerShown: false,
         }}
       >
         <Stack.Screen name="index" />

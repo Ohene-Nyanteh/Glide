@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { settings } from "@/types/db";
+import { settings, songs } from "@/types/db";
 import { useSQLiteContext } from "expo-sqlite";
+import Songs from "@/app/(media-tabs)";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 const SettingsContext = createContext<{
   settings: settings;
@@ -55,6 +57,8 @@ function SettingsContextProvider({ children }: any) {
       console.error(e);
     }
   };
+
+
 
   useEffect(() => {
     fetchSettings();

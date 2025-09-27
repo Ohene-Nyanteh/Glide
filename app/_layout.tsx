@@ -1,22 +1,22 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "@/global.css";
 import ThemeContextProvider from "@/utils/contexts/ThemeContext";
 import PlayerContextProvider from "@/utils/contexts/PlayerContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Dimensions, View } from "react-native";
+import { View } from "react-native";
 import LoadingScreen from "@/components/General/LoadingScreen";
 import { StyleSheet, Platform, StatusBar } from "react-native";
 import DatabaseContextProvider from "@/utils/contexts/DatabaseContext";
 import { useSQLiteContext } from "expo-sqlite";
 import UserContextProvider from "@/utils/contexts/UserContext";
 import "react-native-get-random-values";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toasts } from "@backpackapp-io/react-native-toast";
 import SettingsContextProvider from "@/utils/contexts/SettingsContext";
-import AudioContextProvider from "@/utils/contexts/AudioContext";
-import SongMiniModal from "@/components/General/SongMiniModal";
+import AudioPlayerWrapper from "@/utils/contexts/AudioContext";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -29,9 +29,11 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   return (
     <DatabaseContextProvider>
-      <PlayerContextProvider>
-        <RootWrapper />
-      </PlayerContextProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <PlayerContextProvider>
+          <RootWrapper />
+        </PlayerContextProvider>
+      </GestureHandlerRootView>
     </DatabaseContextProvider>
   );
 }
@@ -42,6 +44,7 @@ function RootLayoutNav() {
       paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     },
   });
+
   return (
     <View
       className="w-full h-full relative bg-white dark:bg-black"
@@ -55,6 +58,9 @@ function RootLayoutNav() {
         >
           <Stack.Screen name="(media-tabs)" />
           <Stack.Screen name="playlist" />
+          <Stack.Screen name="artists" />
+          <Stack.Screen name="albums" />
+
           <Stack.Screen name="playMedia" />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         </Stack>
@@ -66,10 +72,9 @@ function RootLayoutNav() {
 function RootWrapper() {
   const [initialLoad, setInitialLoad] = useState(true);
   const db = useSQLiteContext();
+
   useEffect(() => {
-    if (!initialLoad) {
-      SplashScreen.hideAsync();
-    }
+    SplashScreen.hideAsync();
   }, [initialLoad]);
 
   if (initialLoad) {
@@ -88,11 +93,11 @@ function RootWrapper() {
     <ThemeContextProvider>
       <UserContextProvider>
         <SettingsContextProvider>
-          <AudioContextProvider>
+          <AudioPlayerWrapper>
             <View className={`w-full h-full relative`}>
               <RootLayoutNav />
             </View>
-          </AudioContextProvider>
+          </AudioPlayerWrapper>
         </SettingsContextProvider>
       </UserContextProvider>
       <Toasts />

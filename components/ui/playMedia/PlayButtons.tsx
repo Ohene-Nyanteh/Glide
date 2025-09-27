@@ -1,8 +1,9 @@
+import { useAudioPlayerContext } from "@/utils/contexts/AudioContext";
 import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { useSettings } from "@/utils/contexts/SettingsContext";
 import { theme } from "@/utils/contexts/ThemeContext";
 import { AntDesign } from "@expo/vector-icons";
-import { Delta, musicDelta } from "@ohene/flow-player";
+import {  musicDelta } from "@ohene/flow-player";
 import { AudioPlayer } from "expo-audio";
 import { router } from "expo-router";
 import { useEffect } from "react";
@@ -12,20 +13,19 @@ export default function PlayButton({
   themeProvider,
   setIsPlaying,
   playing,
-  player,
   setSong,
   song,
 }: {
   themeProvider: { theme: theme };
   setSong: (song: musicDelta) => void;
   setIsPlaying: (playing: boolean) => void;
-  player: AudioPlayer | null;
   playing: boolean;
   song: musicDelta;
 }) {
   const settingsContext = useSettings();
   const playerContext = usePlayer();
   const songs = playerContext?.queue?.getSongs();
+  const {player} = useAudioPlayerContext()
 
   const handleNext = () => {
     if (songs) {
@@ -44,7 +44,7 @@ export default function PlayButton({
         case "all":
           if (currentSong === songs?.length - 1) {
             router.setParams({ id: songs[0].id });
-          }else{
+          } else {
             router.setParams({ id: songs[currentSong + 1].id });
           }
           break;
@@ -93,7 +93,7 @@ export default function PlayButton({
     <>
       <Pressable onPress={handlePrevious}>
         <AntDesign
-          name="stepbackward"
+          name="step-backward"
           size={30}
           color={themeProvider.theme === "dark" ? "white" : "black"}
         />
@@ -104,13 +104,13 @@ export default function PlayButton({
       >
         {playing ? (
           <AntDesign
-            name="pausecircleo"
+            name="pause-circle"
             size={60}
             color={themeProvider.theme === "dark" ? "white" : "black"}
           />
         ) : (
           <AntDesign
-            name="playcircleo"
+            name="play-circle" 
             size={60}
             color={themeProvider.theme === "dark" ? "white" : "black"}
           />
@@ -118,7 +118,7 @@ export default function PlayButton({
       </Pressable>
       <Pressable onPress={handleNext}>
         <AntDesign
-          name="stepforward"
+          name="step-forward"
           size={30}
           color={themeProvider.theme === "dark" ? "white" : "black"}
         />

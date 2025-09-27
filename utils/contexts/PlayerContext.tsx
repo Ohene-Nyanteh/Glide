@@ -1,5 +1,8 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { Delta, MobilePlayer } from "@ohene/flow-player";
+import { useAudioPlayerContext } from "./AudioContext";
+import { useSettings } from "./SettingsContext";
+import { router } from "expo-router";
 
 const PlayerContext = createContext<{
   player: MobilePlayer;

@@ -1,9 +1,6 @@
 // utils/metadataCache.ts
-import * as FileSystem from "expo-file-system";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MobilePlayer, musicDelta } from "@ohene/flow-player";
-import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
-
+import { SQLiteDatabase } from "expo-sqlite";
 
 export async function processAndCacheMetadata(
   db: SQLiteDatabase,
@@ -13,18 +10,17 @@ export async function processAndCacheMetadata(
 ) {
   const cache: Record<string, any> = {};
   let index = 0;
+  const metadataParser = new MobilePlayer([])
   for (const song of songList) {
-    const id = song.id || `song-${index}`; // or however you uniquely identify songs
+    const id = song.id || `song-${index}`;
 
     try {
-      
-      const meta = await player.getExpoSongMetadata(song);
+      const meta = await metadataParser.getExpoSongMetadata(song);
       let imagebase64 = "";
 
       if (meta?.metadata.artwork) {
         imagebase64 = meta.metadata.artwork.toString();
       }
-
 
       await db.runAsync(
         `INSERT INTO songs (id, file_name, music_path, name, album, artist, image, dateModified, duration, genre) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -38,7 +34,7 @@ export async function processAndCacheMetadata(
           imagebase64,
           song.metadata?.dateModified ?? "Unknown Date Modified",
           song.metadata?.duration ?? 0,
-          meta?.metadata.name ?? "",
+          "Music",
         ]
       );
 
@@ -48,7 +44,7 @@ export async function processAndCacheMetadata(
         artist: meta?.metadata.artist ?? "Unknown Artist",
         duration: song.metadata?.duration ?? 0,
         dateModified: song.metadata?.dateModified ?? "Unknown Date Modified",
-        genre: meta?.metadata.name ?? "",
+        genre: meta?.metadata.name ?? "Unknown Genre",
         image: imagebase64,
       };
     } catch (err) {

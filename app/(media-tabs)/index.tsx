@@ -20,13 +20,12 @@ function Songs() {
         <FlashList
           data={playerContext?.player.getSongs()}
           keyExtractor={(_, index) => index.toString()}
-          ItemSeparatorComponent={() => <View style={{ height: 3 }} />}
+          ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
           renderItem={({ item }) => <SongRow song={item} />}
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingBottom: 20,
           }}
-          estimatedItemSize={58}
         />
       )}
     </View>

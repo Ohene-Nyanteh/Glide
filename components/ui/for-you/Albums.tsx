@@ -52,7 +52,7 @@ function AlbumsSnippet() {
           ListEmptyComponent={
             <View className="flex flex-row gap-4 w-full justify-center items-center h-60 px-10">
               <AntDesign
-                name="exclamationcircle"
+                name="exclamation-circle"
                 size={24}
                 color={theme.theme === "dark" ? "white" : "black"}
               />
@@ -61,10 +61,9 @@ function AlbumsSnippet() {
           }
           showsHorizontalScrollIndicator={true}
           ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
-          estimatedItemSize={148}
           renderItem={({ item }) => (
             <AlbumCard
-              song={item.songs[0]} // or build a custom AlbumCard
+              song={item.songs[0]}
             />
           )}
           contentContainerStyle={{ paddingHorizontal: 16 }}

@@ -17,6 +17,7 @@ function DatabaseContextProvider({ children }: { children: React.ReactNode }) {
             album TEXT,
             artist TEXT,
             image TEXT,
+            favourite INTEGER DEFAULT 0,
             dateModified TEXT,
             duration INTEGER,
             genre TEXT
@@ -32,7 +33,7 @@ function DatabaseContextProvider({ children }: { children: React.ReactNode }) {
             );
             `);
 
-            // Playlist songs table
+      // Playlist songs table
       await db.execAsync(`CREATE TABLE IF NOT EXISTS playlist_songs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             playlist_id TEXT,
@@ -58,6 +59,7 @@ function DatabaseContextProvider({ children }: { children: React.ReactNode }) {
             currentPlayingID INTEGER,
             FOREIGN KEY (currentPlayingID) REFERENCES songs(id) ON DELETE SET NULL
         )`);
+
     } catch (error) {
       console.error("Migration error:", error);
     }
@@ -68,7 +70,6 @@ function DatabaseContextProvider({ children }: { children: React.ReactNode }) {
       <SQLiteProvider
         databaseName="glide.db"
         onInit={migrate}
-        
         useSuspense
         options={{ useNewConnection: true }}
       >

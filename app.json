@@ -22,7 +22,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ohene_nyanteh.glide"
+      "package": "com.ohene_nyanteh.glide",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -32,10 +37,31 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
-      "expo-audio"
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos.",
+          "audioPermission": "Allow $(PRODUCT_NAME) to access audio files.",
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": ["audio"]
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "most-recent"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "63d6f152-8637-48d9-bd04-fd6411e2b848"
+      }
     }
   }
 }

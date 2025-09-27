@@ -1,4 +1,5 @@
 import { checkStorage } from "@/Functions/checkStorage";
+import clearDB from "@/Functions/clearDB";
 import { mediaPermissionsRequest } from "@/Functions/mediaPermissionsRequest";
 import { processAndCacheMetadata } from "@/Functions/metadataCache";
 import { musicDB } from "@/types/music";
@@ -40,6 +41,7 @@ async function loadSongs(
   if (!isDataAvailable) {
     const { granted, media } = await mediaPermissionsRequest();
     if (!granted) {
+
       return null;
     }
 
@@ -62,7 +64,6 @@ async function loadSongs(
     });
 
     setTotalCount(data.length);
-    // generate and cache Metadata
     await processAndCacheMetadata(db, data, player, setCurrentCount);
     const songs: musicDB[] = await db.getAllAsync("SELECT * FROM songs");
     const music: musicDelta[] = songs.map((song) => {
@@ -70,6 +71,7 @@ async function loadSongs(
         music_path: song.music_path,
         duration: song.duration,
         file_name: song.music_path,
+        isFavorite: song.favourite === 1 ? true : false,
         id: song.id,
         metadata: {
           name: song.name,
