@@ -12,7 +12,7 @@ export default function Albums() {
 
   const getAlbums = async () => {
     const res: { album: string; image: string }[] | null = await db.getAllAsync(
-      "SELECT album, image FROM songs GROUP BY album ORDER BY COUNT(id) DESC"
+      "SELECT id, album, image FROM songs GROUP BY album ORDER BY COUNT(id) DESC"
     );
     if (res) {
       setAlbums(res);

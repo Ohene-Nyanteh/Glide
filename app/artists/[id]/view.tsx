@@ -19,7 +19,8 @@ import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { music, musicDB } from "@/types/music";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function PlaylistPage() {
+
+export default function ArtistPage() {
   const router = useRouter();
   const [album, setAlbum] = useState<{
     name: string;
@@ -30,12 +31,12 @@ export default function PlaylistPage() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams();
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets()
 
   const fetchAlbum = async () => {
     try {
       const data: musicDB[] | null = await db.getAllAsync(
-        "SELECT * FROM songs WHERE album = ?",
+        "SELECT * FROM songs WHERE artist = ?",
         [id as string]
       );
 
@@ -51,9 +52,9 @@ export default function PlaylistPage() {
               dateModified: song.dateModified,
               duration: song.duration,
               genre: song.genre,
-              name: song.name,
-            },
-          };
+              name: song.name
+            }
+          }
         });
         setAlbum({
           name: data[0].album,
@@ -65,6 +66,8 @@ export default function PlaylistPage() {
       console.error(e);
     }
   };
+
+
 
   useEffect(() => {
     fetchAlbum();
@@ -98,7 +101,7 @@ export default function PlaylistPage() {
               {album.songs[0].metadata?.image ? (
                 <Image
                   source={{
-                    uri: `${album.songs[0].metadata?.image}`,
+                    uri: `${album.songs[0].metadata?.image }`,
                   }}
                   resizeMode="cover"
                   height={50}

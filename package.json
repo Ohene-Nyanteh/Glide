@@ -16,6 +16,7 @@
     "@backpackapp-io/react-native-toast": "^0.14.0",
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.2",
+    "@kolking/react-native-avatar": "^2.1.6",
     "@miblanchard/react-native-slider": "^2.6.0",
     "@ohene/flow-player": "^1.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",

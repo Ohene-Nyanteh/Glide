@@ -31,7 +31,7 @@ function TabsComponent() {
       {tabs.map((tab, index) => (
         <Link href={tab.link} asChild key={index}>
           <Text
-            className={`w-fit h-full p-1 ${tab.link === pathname ? "text-blue-500 border-b border-blue-500" : "text-black dark:text-gray-400"} font-semibold`} 
+            className={`w-fit h-full text-lg p-1 ${tab.link === pathname ? "text-blue-500 border-b border-blue-500" : "text-black dark:text-gray-400"} font-semibold`}
           >
             {tab.tab}
           </Text>

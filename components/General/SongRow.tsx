@@ -8,13 +8,7 @@ import { Image, View, Text, Pressable } from "react-native";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import SongMenu from "./SongMenu";
 
-function SongRow({
-  song,
-  playlist_id,
-}: {
-  song: musicDelta;
-  playlist_id?: string;
-}) {
+function SongRow({ song }: { song: musicDelta }) {
   const [imageError, setImageError] = useState(false);
   const { theme } = useTheme();
   const [metadata, setMetadata] = useState<musicDelta["metadata"] | music>({

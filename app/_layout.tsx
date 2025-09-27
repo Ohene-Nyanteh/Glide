@@ -60,7 +60,6 @@ function RootLayoutNav() {
           <Stack.Screen name="playlist" />
           <Stack.Screen name="artists" />
           <Stack.Screen name="albums" />
-
           <Stack.Screen name="playMedia" />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         </Stack>

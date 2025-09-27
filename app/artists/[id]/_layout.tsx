@@ -1,8 +1,8 @@
-import { View, Text } from "react-native";
-import React from "react";
-import { Stack } from "expo-router";
+import { View, Text } from 'react-native'
+import React from 'react'
+import { Stack } from 'expo-router'
 
-export default function ArtistLayout() {
+export default function ArtistIDLayout() {
   return (
     <View className="w-full h-full">
       <Stack
@@ -11,10 +11,10 @@ export default function ArtistLayout() {
         }}
       >
         <Stack.Screen
-          name="[id]"
+          name="view"
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />
       </Stack>
     </View>
-  );
+  )
 }
