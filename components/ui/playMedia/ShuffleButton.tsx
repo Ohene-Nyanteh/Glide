@@ -15,12 +15,12 @@ export default function ShuffleButton({
   themeProvider: { theme: theme };
   db: SQLiteDatabase;
 }) {
-  const [shuffle, setshuffle] = useState<boolean>(false);
+  const [shuffle, setshuffle] = useState<settings["shuffle"]>();
   const playerContext = usePlayer();
   const settingsContext = useSettings();
   const shuffleSettings = settingsContext?.settings.shuffle;
 
-  const handleShuffleChange = async (shuffle_: boolean) => {
+  const handleShuffleChange = async (shuffle_: settings["shuffle"]) => {
     await settingsContext?.insertSettings({
       id: settingsContext.settings.id,
       shuffle: shuffle_,
@@ -32,8 +32,9 @@ export default function ShuffleButton({
   };
 
   useEffect(() => {
-    if (shuffleSettings) {
-      playerContext?.setQueue(new Delta(playerContext.queue.shuffleSongs()));
+    if (shuffleSettings === "shuffle") {
+      const shuffledSongs = playerContext?.queue.shuffleSongs();
+      if (shuffledSongs) playerContext?.queue.setSongs(shuffledSongs);
       setshuffle(shuffleSettings);
     } else {
       playerContext?.setQueue(
@@ -59,12 +60,16 @@ export default function ShuffleButton({
     }
   }, [shuffleSettings, shuffle]);
   return (
-    <Pressable onPress={() => handleShuffleChange(!shuffle)}>
+    <Pressable
+      onPress={() =>
+        handleShuffleChange(shuffle === "shuffle" ? "no-shuffle" : "shuffle")
+      }
+    >
       <MaterialIcons
         name="shuffle"
         size={25}
         color={
-          shuffle ? "blue" : themeProvider.theme === "dark" ? "white" : "black"
+          shuffle === "shuffle" ? "blue" : themeProvider.theme === "dark" ? "white" : "black"
         }
       />
     </Pressable>

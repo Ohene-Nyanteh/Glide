@@ -13,7 +13,7 @@ export type playlists = {
 
 export type settings = {
     repeat: "all" | "single" | "none" | "repeatBy",
-    shuffle: boolean,
+    shuffle: "shuffle" | "no-shuffle",
     currentPlayingID: number | null,
     id: number
 }

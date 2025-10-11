@@ -65,7 +65,6 @@ export default function QueueModal({
                   paddingHorizontal: 16,
                   paddingBottom: 20,
                 }}
-                estimatedItemSize={50}
               />
             )}
           </View>

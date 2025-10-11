@@ -1,3 +1,4 @@
+import { toast } from "@backpackapp-io/react-native-toast";
 import { MobilePlayer, PlaylistDelta } from "@ohene/flow-player";
 import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { Suspense } from "react";
@@ -7,7 +8,7 @@ function DatabaseContextProvider({ children }: { children: React.ReactNode }) {
   const migrate = async (db: SQLiteDatabase) => {
     try {
       await db.execAsync(`PRAGMA foreign_keys = ON`);
-
+      
       // Songs table
       await db.execAsync(`CREATE TABLE IF NOT EXISTS songs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +62,7 @@ function DatabaseContextProvider({ children }: { children: React.ReactNode }) {
         )`);
 
     } catch (error) {
-      console.error("Migration error:", error);
+      toast.error("Couldnt Create Database")
     }
   };
 

@@ -8,6 +8,7 @@ import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { useFonts } from "expo-font";
 import { SQLiteDatabase } from "expo-sqlite";
 import { settings } from "@/types/db";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 export default function LoadingScreen({
   setInitialLoad,
@@ -58,7 +59,7 @@ export default function LoadingScreen({
       const defaultSettings: settings = {
         currentPlayingID: null,
         repeat: "none",
-        shuffle: false,
+        shuffle: "shuffle",
         id: 0,
       };
       try {
@@ -71,7 +72,7 @@ export default function LoadingScreen({
           ]
         );
       } catch (e) {
-        console.error(e);
+       toast.error("Error: Couldnt Load Initial Settings")
       }
     }
   };

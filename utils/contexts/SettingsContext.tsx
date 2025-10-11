@@ -22,7 +22,7 @@ function SettingsContextProvider({ children }: any) {
     id: 0,
     currentPlayingID: null,
     repeat: "none",
-    shuffle: false,
+    shuffle: "no-shuffle",
   });
 
   const fetchSettings = async () => {
@@ -34,7 +34,7 @@ function SettingsContextProvider({ children }: any) {
         setSettings(res);
       }
     } catch (e) {
-      console.error(e);
+      toast.error("Error: Couldnt fetch Settings")
     }
   };
 
@@ -54,7 +54,7 @@ function SettingsContextProvider({ children }: any) {
         setSettings(settings);
       }
     } catch (e) {
-      console.error(e);
+     toast.error("Error: Couln't Update Settings")
     }
   };
 

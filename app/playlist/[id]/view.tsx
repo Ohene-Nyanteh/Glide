@@ -16,6 +16,7 @@ import { shortenText } from "@/lib/shortenText";
 import { FlashList } from "@shopify/flash-list";
 import SongRow from "@/components/General/SongRow";
 import { usePlayer } from "@/utils/contexts/PlayerContext";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 interface PlaylistContext {
   playlist: playlists;
@@ -57,7 +58,7 @@ export default function PlaylistPage() {
         setPlaylist({ playlist: formattedData, thumbnail: data.image_data });
       }
     } catch (e) {
-      console.error(e);
+      toast.error("Error: Couldn't Fetch Playlist Information")
     }
   };
 
@@ -76,7 +77,7 @@ export default function PlaylistPage() {
         }) || [];
       setDisplayedSongs(filteredSongs);
     } catch (e) {
-      console.error(e);
+      toast.error("Error: Couldn't Fetch Playlist songs")
     }
   };
 

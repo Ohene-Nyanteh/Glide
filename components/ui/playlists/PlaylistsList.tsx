@@ -6,6 +6,7 @@ import { Entypo, FontAwesome } from "@expo/vector-icons";
 import { shortenText } from "@/lib/shortenText";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import { Link } from "expo-router";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 interface RenderedPlaylist extends playlists {
   thumbnail: string | undefined;
@@ -40,7 +41,7 @@ export default function PlaylistsList() {
 
       setPlaylists(playlistsArray);
     } catch (error) {
-      console.error(error);
+      toast.error("Couldnt Fetch Playlists")
     }
   };
 

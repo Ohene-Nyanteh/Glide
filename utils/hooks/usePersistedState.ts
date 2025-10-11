@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 type Response<T> = [T, React.Dispatch<React.SetStateAction<T>>];
 
@@ -20,14 +21,14 @@ export function usePersistedState<T extends object>(
           }
         }
       } catch (error) {
-        console.error("Failed to parse AsyncStorage item:", error);
+        toast.error("Failed to parse AsyncStorage item")
       }
     })();
   }, [key]);
 
   useEffect(() => {
     AsyncStorage.setItem(key, JSON.stringify(state)).catch((error) =>
-      console.error("Failed to save to AsyncStorage:", error)
+      toast.error("Failed to parse AsyncStorage item")
     );
   }, [key, state]);
 

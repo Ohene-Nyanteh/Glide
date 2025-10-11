@@ -1,9 +1,13 @@
 import { checkStorage } from "@/Functions/checkStorage";
 import clearDB from "@/Functions/clearDB";
+import { dbRowToDelta } from "@/Functions/dbRowToDelta";
+import { detectNewSongs } from "@/Functions/detectNewSongs";
 import { mediaPermissionsRequest } from "@/Functions/mediaPermissionsRequest";
 import { processAndCacheMetadata } from "@/Functions/metadataCache";
+import { processAllSongs } from "@/Functions/processAllSongs";
 import { musicDB } from "@/types/music";
 import { MobilePlayer, musicDelta } from "@ohene/flow-player";
+import { Directory, Paths } from "expo-file-system";
 import { SQLiteDatabase } from "expo-sqlite";
 
 export interface IuseLoadSongs {
@@ -37,57 +41,30 @@ async function loadSongs(
   setCurrentCount: (currentCount: number) => void,
   setTotalCount: (totalCount: number) => void
 ): Promise<musicDelta[] | null> {
-  const { content, isDataAvailable } = await checkStorage(db);
+  const { isDataAvailable } = await checkStorage(db);
+
+  const { granted, media } = await mediaPermissionsRequest();
+  if (!granted) return null;
+
+  // If DB is empty → full scan
   if (!isDataAvailable) {
-    const { granted, media } = await mediaPermissionsRequest();
-    if (!granted) {
-
-      return null;
-    }
-
-    const data: musicDelta[] = media.map((asset, index) => {
-      return {
-        music_path: asset.uri,
-        duration: asset.duration,
-        file_name: asset.filename,
-        id: index + 1,
-        metadata: {
-          name: asset.filename,
-          album: "",
-          artist: "",
-          image: asset.uri,
-          dateModified: asset.modificationTime.toString(),
-          duration: asset.duration,
-          genre: "",
-        },
-      };
-    });
-
-    setTotalCount(data.length);
-    await processAndCacheMetadata(db, data, player, setCurrentCount);
-    const songs: musicDB[] = await db.getAllAsync("SELECT * FROM songs");
-    const music: musicDelta[] = songs.map((song) => {
-      return {
-        music_path: song.music_path,
-        duration: song.duration,
-        file_name: song.music_path,
-        isFavorite: song.favourite === 1 ? true : false,
-        id: song.id,
-        metadata: {
-          name: song.name,
-          album: song.album,
-          artist: song.artist,
-          image: song.image,
-          dateModified: song.dateModified,
-          duration: song.duration,
-          genre: song.genre,
-        },
-      };
-    });
-
-    return music;
+    return await processAllSongs(
+      db,
+      player,
+      media,
+      setCurrentCount,
+      setTotalCount
+    );
   }
 
-  setCurrentCount(0);
-  return content;
+  const newSongs = await detectNewSongs(db, media);
+
+  if (newSongs.length > 0) {
+    setTotalCount(newSongs.length);
+    await processAndCacheMetadata(db, newSongs, player, setCurrentCount);
+  }
+
+  const songs: musicDB[] = await db.getAllAsync("SELECT * FROM songs");
+  const music: musicDelta[] = songs.map(dbRowToDelta);
+  return music;
 }

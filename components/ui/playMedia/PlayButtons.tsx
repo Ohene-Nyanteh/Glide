@@ -1,13 +1,13 @@
-import { useAudioPlayerContext } from "@/utils/contexts/AudioContext";
 import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { useSettings } from "@/utils/contexts/SettingsContext";
 import { theme } from "@/utils/contexts/ThemeContext";
 import { AntDesign } from "@expo/vector-icons";
-import {  musicDelta } from "@ohene/flow-player";
-import { AudioPlayer } from "expo-audio";
+import { musicDelta } from "@ohene/flow-player";
 import { router } from "expo-router";
 import { useEffect } from "react";
 import { Pressable } from "react-native";
+import { useNotificationContext } from "@/utils/contexts/NotificationContext";
+import { useMediaAudio } from "@/utils/contexts/AudioPlayerContext";
 
 export default function PlayButton({
   themeProvider,
@@ -18,14 +18,18 @@ export default function PlayButton({
 }: {
   themeProvider: { theme: theme };
   setSong: (song: musicDelta) => void;
+  currentPosition: number;
   setIsPlaying: (playing: boolean) => void;
   playing: boolean;
   song: musicDelta;
 }) {
   const settingsContext = useSettings();
   const playerContext = usePlayer();
+  
+  // const notificationContext = useNotificationContext();
   const songs = playerContext?.queue?.getSongs();
-  const {player} = useAudioPlayerContext()
+  const { player } = useMediaAudio();
+  const context = useNotificationContext();
 
   const handleNext = () => {
     if (songs) {
@@ -73,7 +77,7 @@ export default function PlayButton({
     }
   };
 
-  const handlePlaying = () => {
+  const handlePlaying = async () => {
     if (playing) {
       player?.pause();
       setSong({ ...song, isPlaying: false });
@@ -86,8 +90,8 @@ export default function PlayButton({
   };
 
   useEffect(() => {
-    player?.play();
-  }, []);
+    context?.runNotification({ song });
+  }, [song.id]);
 
   return (
     <>
@@ -110,7 +114,7 @@ export default function PlayButton({
           />
         ) : (
           <AntDesign
-            name="play-circle" 
+            name="play-circle"
             size={60}
             color={themeProvider.theme === "dark" ? "white" : "black"}
           />

@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image } from "react-native";
+import { View, Text, Pressable, Image, ActivityIndicator } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import type { songs } from "@/types/db";
 import { Slider } from "@miblanchard/react-native-slider";
@@ -11,9 +11,7 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
-import { Delta, MobilePlayer, musicDelta } from "@ohene/flow-player";
 import { useSQLiteContext } from "expo-sqlite";
-import { AudioStatus } from "expo-audio";
 import { shortenText } from "@/lib/shortenText";
 import { formatTime } from "@/lib/formatTime";
 import { toast } from "@backpackapp-io/react-native-toast";
@@ -25,121 +23,88 @@ import { usePlayer } from "@/utils/contexts/PlayerContext";
 import FavouriteButton from "@/components/ui/playMedia/FavouriteButton";
 import QueueModal from "@/components/General/QueueModal";
 import { useAudioPlayerContext } from "@/utils/contexts/AudioContext";
+import { useMediaAudio } from "@/utils/contexts/AudioPlayerContext";
 
 export default function PlaySongPage() {
   const { id } = useLocalSearchParams();
   const [showQueue, setShowQueue] = useState(false);
-  const { player } = useAudioPlayerContext();
+  const { player } = useMediaAudio();
+  const { song, setSong, setDurationObject, durationObject } =
+    useAudioPlayerContext();
   const db = useSQLiteContext();
   const { theme } = useTheme();
   const playerContext = usePlayer();
-  const songs = playerContext?.queue?.getSongs();
-  const [song, setSong] = useState<musicDelta | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [imageError, setImageError] = useState(false);
   const settingsContext = useSettings();
-  const [durationObject, setDurationObject] = useState<{
-    currentDuration: number;
-    totalDuration: number;
-  }>({
-    currentDuration: 0,
-    totalDuration: 0,
-  });
 
-  const handleNextTrack = () => {
-    if (songs && song) {
-      const currentIndex = songs.findIndex((s) => s.id === song.id);
-      const nextIndex = (currentIndex + 1) % songs.length;
-      router.setParams({ id: songs[nextIndex].id });
-    }
-  };
-
-  const handlePreviousTrack = () => {
-    if (songs && song) {
-      const currentIndex = songs.findIndex((s) => s.id === song.id);
-      const prevIndex =
-        currentIndex === 0 ? songs.length - 1 : currentIndex - 1;
-      router.setParams({ id: songs[prevIndex].id });
-    }
-  };
-
-  const fetchSongInfo = async () => {
+  const fetchSongInfo = useCallback(async () => {
     try {
       const songInfo: songs | null = await db.getFirstAsync(
         "SELECT * FROM songs WHERE id = ?",
         [id as string]
       );
 
-      if (songInfo) {
-        setSong({
-          id: songInfo.id,
-          music_path: songInfo.music_path,
-          metadata: {
-            name: songInfo.name,
-            album: songInfo.album,
-            artist: songInfo.artist,
-            dateModified: songInfo.dateModified,
-            genre: songInfo.genre,
-            duration: songInfo.duration,
-            image: songInfo.image,
-          },
-          isFavorite: songInfo.favourite === 1 ? true : false,
-          isPlaying: true,
-        });
+      if (!songInfo) {
+        toast.error("Song not found");
+        return;
+      }
 
-        if (songs) {
-          playerContext?.setQueue(
-            new Delta(
-              songs?.map((p_song) => {
-                if (p_song.id === songInfo.id) {
-                  return { ...p_song, isPlaying: true };
-                }
-                return { ...p_song, isPlaying: false };
-              })
-            )
-          );
-          playerContext?.setPlayer(
-            new MobilePlayer(
-              playerContext.player.getSongs()?.map((p_song) => {
-                if (p_song.id === songInfo.id) {
-                  return { ...p_song, isPlaying: true };
-                }
-                return { ...p_song, isPlaying: false };
-              })
-            )
-          );
-        }
+      // Update song info
+      setSong({
+        music_path: songInfo.music_path,
+        id: songInfo.id,
+        metadata: {
+          name: songInfo.name,
+          artist: songInfo.artist,
+          image: songInfo.image,
+          duration: songInfo.duration,
+          album: songInfo.album,
+          genre: songInfo.genre,
+          dateModified: songInfo.dateModified,
+        },
+      });
 
-        if (settingsContext?.settings.currentPlayingID !== songInfo.id) {
-          playerContext?.setPlayer(
-            new MobilePlayer(
-              playerContext.player.getSongs()?.map((p_song) => {
-                if (p_song.id === songInfo.id) {
-                  return { ...p_song, isPlaying: true };
-                }
+      // Update player context
+      playerContext?.queue.setCurrentPlayingSong(songInfo.id);
+      playerContext?.player.setCurrentPlayingSong(songInfo.id);
 
-                return { ...p_song, isPlaying: false };
-              })
-            )
-          );
-          settingsContext?.insertSettings({
-            id: settingsContext.settings.id,
-            shuffle: settingsContext.settings.shuffle,
-            repeat: settingsContext.settings.repeat,
-            currentPlayingID: songInfo.id,
-          });
-        }
-        player?.replace(songInfo.music_path);
-        setIsPlaying(true);
+      // Check if this is a new song
+      const isNewSong =
+        settingsContext?.settings.currentPlayingID !== songInfo.id;
+
+      if (isNewSong) {
+        // New song - reset duration and load
         setDurationObject({
           currentDuration: 0,
           totalDuration: songInfo.duration ?? 0,
         });
+
+        await player?.replace(songInfo.music_path);
+        await player?.play();
+
+        settingsContext?.insertSettings({
+          id: settingsContext.settings.id,
+          shuffle: settingsContext.settings.shuffle,
+          repeat: settingsContext.settings.repeat,
+          currentPlayingID: songInfo.id,
+        });
+
+        setIsPlaying(true);
+      } else {
+        // Same song - just resume if not playing
+        const playing = player?.playing;
+        if (!playing) {
+          player?.play();
+          setIsPlaying(true);
+        } else {
+          setIsPlaying(playing);
+        }
       }
     } catch (error) {
       toast.error("Error: Couldn't fetch song");
     }
-  };
+  }, [id]);
 
   const seekToPlay = (value: number[]) => {
     setDurationObject((prev) => ({
@@ -149,177 +114,13 @@ export default function PlaySongPage() {
     player?.seekTo(value[0]);
   };
 
-  const handlePlaybackStatusUpdate = useCallback(
-    (status: AudioStatus) => {
-      if (status.didJustFinish) {
-        if (songs) {
-          switch (settingsContext?.settings.repeat) {
-            case "single":
-              player?.seekTo(0);
-              setDurationObject({
-                currentDuration: 0,
-                totalDuration: status.duration ? status.duration : 0,
-              });
-              playerContext?.setQueue(
-                new Delta(
-                  songs.map((p_song) => {
-                    if (p_song.id === song?.id) {
-                      return { ...p_song, isPlaying: true };
-                    }
-
-                    return { ...p_song, isPlaying: false };
-                  })
-                )
-              );
-              playerContext?.setPlayer(
-                new MobilePlayer(
-                  playerContext.player.getSongs()?.map((p_song) => {
-                    if (p_song.id === song?.id) {
-                      return { ...p_song, isPlaying: true };
-                    }
-
-                    return { ...p_song, isPlaying: false };
-                  })
-                )
-              );
-              player?.play();
-              break;
-
-            case "none":
-              if (!(song?.id !== songs?.length - 1)) {
-                const song_id = song?.id ?? 0;
-                playerContext?.setQueue(
-                  new Delta(
-                    songs.map((p_song) => {
-                      if (p_song.id === song_id + 1) {
-                        return { ...p_song, isPlaying: true };
-                      } else {
-                        return { ...p_song, isPlaying: false };
-                      }
-                    })
-                  )
-                );
-                playerContext?.setPlayer(
-                  new MobilePlayer(
-                    playerContext.player.getSongs()?.map((p_song) => {
-                      if (p_song.id === song_id + 1) {
-                        return { ...p_song, isPlaying: true };
-                      }
-
-                      return { ...p_song, isPlaying: false };
-                    })
-                  )
-                );
-
-                router.setParams({ id: songs[song_id + 1].id });
-              } else {
-                player?.pause();
-                setDurationObject({
-                  currentDuration: 0,
-                  totalDuration: status.duration ? status.duration : 0,
-                });
-                setIsPlaying(false);
-              }
-              break;
-
-            default:
-              if (song?.id !== songs?.length - 1) {
-                const song_id = song?.id ?? 0;
-                playerContext?.setQueue(
-                  new Delta(
-                    songs.map((p_song) => {
-                      if (p_song.id === song_id + 1) {
-                        return { ...p_song, isPlaying: true };
-                      } else {
-                        return { ...p_song, isPlaying: false };
-                      }
-                    })
-                  )
-                );
-                playerContext?.setPlayer(
-                  new MobilePlayer(
-                    playerContext.player.getSongs()?.map((p_song) => {
-                      if (p_song.id === song_id + 1) {
-                        return { ...p_song, isPlaying: true };
-                      }
-
-                      return { ...p_song, isPlaying: false };
-                    })
-                  )
-                );
-                router.setParams({ id: songs[song_id + 1].id });
-              } else {
-                playerContext?.setQueue(
-                  new Delta(
-                    songs.map((p_song) => {
-                      if (p_song.id === 0) {
-                        return { ...p_song, isPlaying: true };
-                      } else {
-                        return { ...p_song, isPlaying: false };
-                      }
-                    })
-                  )
-                );
-                router.setParams({ id: songs[0].id });
-              }
-          }
-        }
-      }
-
-      if (status) {
-        setDurationObject({
-          currentDuration: status.currentTime,
-          totalDuration: status.duration ? status.duration : 0,
-        });
-      }
-    },
-    [settingsContext?.settings.repeat, song]
-  );
-
   useEffect(() => {
     fetchSongInfo();
-  }, [id]);
-
-  useEffect(() => {
-    const subscription = player?.addListener(
-      "playbackStatusUpdate",
-      handlePlaybackStatusUpdate
-    );
-
-    return () => subscription?.remove();
-  }, [handlePlaybackStatusUpdate]);
+  }, [fetchSongInfo]);
 
   return (
     <View className="w-full h-full dark:bg-black p-4">
-      <View className="flex flex-row justify-between items-center">
-        <Pressable
-          onPress={() => {
-            router.back();
-          }}
-        >
-          <AntDesign
-            name="arrow-left"
-            size={20}
-            color={theme.theme === "dark" ? "white" : "black"}
-          />
-        </Pressable>
-        <View>
-          <Text className="text-gray-400 text-xs text-center">Now Playing</Text>
-          <Text className="dark:text-white text-center text-sm">
-            {shortenText(song?.metadata?.name ?? "Unknown Song", 40)}
-          </Text>
-        </View>
 
-        <View className="flex flex-row gap-2 items-center">
-          <Pressable>
-            <Entypo
-              name="dots-three-vertical"
-              size={20}
-              color={theme.theme === "dark" ? "white" : "black"}
-            />
-          </Pressable>
-        </View>
-      </View>
       <View className="w-full h-full">
         {song ? (
           <View className="w-full h-full">
@@ -350,35 +151,38 @@ export default function PlaySongPage() {
                 )}
               </View>
             </View>
-            <View className="flex flex-col gap-6">
-              <View className="w-full flex flex-col gap-4 items-center">
+            <View className="flex flex-col gap-4">
+              <View className="w-full flex flex-col gap-2 items-center">
                 <Text className="dark:text-white font-semibold uppercase text-lg">
                   {shortenText(song.metadata?.name || "Unknown Song", 30)}
                 </Text>
-                <Text className="dark:text-gray-600 text-gray-400">
+                <Text className="dark:text-gray-600 text-gray-400 text-sm">
                   {song.metadata?.artist}
                 </Text>
               </View>
-              <View className="w-full h-2 relative">
-                <View className="w-full h-3 rounded bg-gray">
-                  <Slider
-                    value={durationObject.currentDuration}
-                    onValueChange={(value) => seekToPlay(value)}
-                    minimumValue={0}
-                    maximumValue={durationObject.totalDuration}
-                    minimumTrackTintColor="blue"
-                    thumbTintColor="blue"
-                    maximumTrackTintColor="gray"
-                  />
+              <View className="flex flex-col gap-10">
+                <View className="w-full h-2 relative">
+                  <View className="w-full h-3 rounded bg-gray">
+                    <Slider
+                      value={durationObject.currentDuration}
+                      onValueChange={(value) => seekToPlay(value)}
+                      minimumValue={0}
+                      trackStyle={{ height: 8, borderRadius: 999 }}
+                      maximumValue={durationObject.totalDuration}
+                      minimumTrackTintColor="blue"
+                      thumbTintColor="blue"
+                      maximumTrackTintColor="gray"
+                    />
+                  </View>
                 </View>
-              </View>
-              <View className="w-full h-4 flex flex-row justify-between">
-                <Text className="text-sm dark:text-gray-200">
-                  {formatTime(durationObject.currentDuration)}
-                </Text>
-                <Text className="text-sm dark:text-gray-200">
-                  {formatTime(song.metadata?.duration || 0)}
-                </Text>
+                <View className="w-full h-4 flex flex-row justify-between">
+                  <Text className="text-sm dark:text-gray-200">
+                    {formatTime(durationObject.currentDuration)}
+                  </Text>
+                  <Text className="text-sm dark:text-gray-200">
+                    {formatTime(song.metadata?.duration || 0)}
+                  </Text>
+                </View>
               </View>
               <View className="flex w-full flex-row justify-between px-6 items-center">
                 <ShuffleButton themeProvider={theme} db={db} />
@@ -387,6 +191,7 @@ export default function PlaySongPage() {
                   themeProvider={theme}
                   setIsPlaying={setIsPlaying}
                   setSong={setSong}
+                  currentPosition={durationObject.currentDuration}
                   song={song}
                 />
                 <RepeatButton db={db} themeProvider={theme} />
@@ -417,7 +222,9 @@ export default function PlaySongPage() {
             </View>
           </View>
         ) : (
-          <View></View>
+          <View>
+            <ActivityIndicator size={"small"} />
+          </View>
         )}
       </View>
       {showQueue && <QueueModal setShow={setShowQueue} />}

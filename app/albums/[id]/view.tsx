@@ -11,15 +11,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import { useSQLiteContext } from "expo-sqlite";
 import { musicDelta } from "@ohene/flow-player";
-import { playlist_songs, playlists } from "@/types/db";
 import { shortenText } from "@/lib/shortenText";
 import { FlashList } from "@shopify/flash-list";
 import SongRow from "@/components/General/SongRow";
-import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { music, musicDB } from "@/types/music";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "@backpackapp-io/react-native-toast";
 
-export default function PlaylistPage() {
+export default function AlbumPage() {
   const router = useRouter();
   const [album, setAlbum] = useState<{
     name: string;
@@ -62,7 +61,7 @@ export default function PlaylistPage() {
         });
       }
     } catch (e) {
-      console.error(e);
+      toast.error("Error: Couldnt Fetch Album");
     }
   };
 

@@ -14,6 +14,7 @@ import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { useSQLiteContext } from "expo-sqlite";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "expo-router";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 export default function addPlaylist() {
   const db = useSQLiteContext();
@@ -73,9 +74,9 @@ export default function addPlaylist() {
           router.navigate("/(media-tabs)/playlist");
         }
       }
-      Alert.alert("Playlist Created", "Playlist Created Successfully");
+      toast.success("Playlist Created Successfully");
     } catch (error) {
-      console.error(error);
+      toast.error("Error: Couldn't Create A Playlist")
     }
   };
 

@@ -7,7 +7,12 @@ import {
   StatusBar,
 } from "react-native";
 import React, { useRef, useState } from "react";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Entypo,
+  Feather,
+  FontAwesome,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import { theme, useTheme } from "@/utils/contexts/ThemeContext";
 import {
   Directions,
@@ -23,7 +28,28 @@ export default function MenuModal() {
   const [isOpen, setIsOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const { user } = useUser();
-  const themes = ["light", "dark"] as const;
+  const themes = [
+    {
+      title: "light",
+      icon: (
+        <FontAwesome
+          name="sun-o"
+          size={20}
+          color={theme.theme == "dark" ? "white" : "black"}
+        />
+      ),
+    },
+    {
+      title: "dark",
+      icon: (
+        <Entypo
+          name="moon"
+          size={20}
+          color={theme.theme == "dark" ? "white" : "black"}
+        />
+      ),
+    },
+  ];
 
   const swipeDown = Gesture.Fling()
     .direction(Directions.LEFT)
@@ -82,15 +108,16 @@ export default function MenuModal() {
               </View>
               <View className="w-full flex flex-col gap-3">
                 <Text className="dark:text-white text-2xl">Settings</Text>
-                <View className="border rounded border-gray-200 dark:border-zinc-900 flex flex-row p-1"> 
+                <View className="border rounded border-gray-200 dark:border-zinc-900 flex flex-row p-1">
                   {themes.map((theme_, index) => (
                     <Pressable
                       key={index}
-                      className={`w-1/2 flex flex-row justify-between items-center p-3 rounded ${theme_ === theme.theme ? "bg-gray-200 dark:bg-zinc-900" : ""}`}
-                      onPress={() => !(theme_ === theme.theme) && toggleTheme()}
+                      className={`w-1/2 flex flex-row gap-3 items-center p-3 rounded ${theme_.title === theme.theme ? "bg-gray-200 dark:bg-zinc-900" : ""}`}
+                      onPress={() => !(theme_.title === theme.theme) && toggleTheme()}
                     >
+                      {theme_.icon}
                       <Text className="dark:text-white capitalize">
-                        {theme_}
+                        {theme_.title}
                       </Text>
                     </Pressable>
                   ))}

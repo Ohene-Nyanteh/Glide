@@ -17,71 +17,35 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import { songs } from "@/types/db";
 import { useSQLiteContext } from "expo-sqlite";
-import { useAudioPlayerContext } from "@/utils/contexts/AudioContext";
+import { useMediaAudio } from "@/utils/contexts/AudioPlayerContext";
 
 export default function SongMiniModal() {
   const settingsContext = useSettings();
   const playerContext = usePlayer();
   const db = useSQLiteContext();
-  const { player } = useAudioPlayerContext();
-  const currentPlayingSong = playerContext?.queue
-    .getSongs()
-    .find((song) => song.id === settingsContext?.settings.currentPlayingID);
+  const { player } = useMediaAudio();
   const [song, setSong] = useState<musicDelta>();
   const [imageError, setImageError] = useState(false);
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const currentPlayingID = settingsContext?.settings.currentPlayingID;
+  const currentPlayingSong = playerContext?.queue.findSongWithId(
+    currentPlayingID as number
+  );
 
   const handlePlayPause = (e: GestureResponderEvent) => {
     e.stopPropagation();
-    if (song?.isPlaying) {
+    if (currentPlayingID) {
       player?.pause();
-      playerContext?.setQueue(
-        new Delta(
-          playerContext.queue.getSongs().map((p_song) => {
-            return { ...p_song, isPlaying: false };
-          })
-        )
-      );
-      playerContext?.setPlayer(
-        new MobilePlayer(
-          playerContext.player.getSongs().map((p_song) => {
-            return { ...p_song, isPlaying: false };
-          })
-        )
-      );
-
-      setSong((prev) => prev && { ...prev, isPlaying: false });
     } else {
       player?.play();
-      playerContext?.setQueue(
-        new Delta(
-          playerContext.queue.getSongs().map((p_song) => {
-            if (p_song.id === song?.id) {
-              return { ...p_song, isPlaying: true };
-            }
-            return { ...p_song, isPlaying: false };
-          })
-        )
-      );
-      playerContext?.setPlayer(
-        new MobilePlayer(
-          playerContext.player.getSongs().map((p_song) => {
-            if (p_song.id === song?.id) {
-              return { ...p_song, isPlaying: true };
-            }
-
-            return { ...p_song, isPlaying: false };
-          })
-        )
-      );
-      setSong((prev) => prev && { ...prev, isPlaying: true });
     }
   };
 
   useEffect(() => {
-    setSong(currentPlayingSong);
+    if (currentPlayingID) {
+      setSong(currentPlayingSong as musicDelta);
+    }
   }, [currentPlayingID]);
 
   return (
@@ -116,7 +80,7 @@ export default function SongMiniModal() {
             )}
             <View className="flex flex-col justify-center gap-1">
               <Text className="font-semibold dark:text-white ">
-                {shortenText(song.metadata?.name || "Unknown Song", 35)}
+                {shortenText(song.metadata?.name || "Unknown Song", 30)}
               </Text>
               <Text className="text-xs text-gray-500">
                 {shortenText(

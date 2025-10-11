@@ -12,7 +12,8 @@ export const mediaPermissionsRequest = async (): Promise<{
 
     const { assets } = await MediaLibrary.getAssetsAsync({
       mediaType: MediaLibrary.MediaType.audio,
-      first: 50,
+      first: 20,
+
       sortBy: [MediaLibrary.SortBy.modificationTime],
     });
     return { granted: true, media: assets };

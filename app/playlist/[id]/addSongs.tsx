@@ -10,6 +10,7 @@ import { useTheme } from "@/utils/contexts/ThemeContext";
 import { useSQLiteContext } from "expo-sqlite";
 import { playlist_songs } from "@/types/db";
 import { music } from "@/types/music";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 export default function AddSongs() {
   const PlayerContext = usePlayer();
@@ -36,7 +37,7 @@ export default function AddSongs() {
         })
       );
     } catch (e) {
-      console.error(e);
+      toast.error("Error: Couldnt get Playlists Songs");
     }
   };
 
@@ -59,13 +60,13 @@ export default function AddSongs() {
             );
           }
         } catch (e) {
-          console.error(e);
+          toast.error("Error: Couldnt Get Songs");
         }
       });
 
       router.navigate(`/playlist/${id as string}/view`);
     } catch (e) {
-      console.error(e);
+      toast.error("Error: Couldnt Add Songs");
     }
   };
   const handleSearch = (text: string) => {
@@ -114,7 +115,7 @@ export default function AddSongs() {
       <View className="flex flex-row items-center justify-between">
         <Pressable onPress={() => router.back()}>
           <AntDesign
-            name="arrowleft"
+            name="arrow-left"
             size={20}
             color={theme.theme === "dark" ? "white" : "black"}
           />
@@ -154,11 +155,12 @@ export default function AddSongs() {
               paddingHorizontal: 16,
               paddingBottom: 120,
             }}
-            estimatedItemSize={58}
           />
         ) : (
           <View>
-            <Text className="dark:text-white text-center">No Songs Available</Text>
+            <Text className="dark:text-white text-center">
+              No Songs Available
+            </Text>
           </View>
         )}
       </View>

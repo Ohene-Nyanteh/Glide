@@ -18,6 +18,7 @@ import SongRow from "@/components/General/SongRow";
 import { usePlayer } from "@/utils/contexts/PlayerContext";
 import { music, musicDB } from "@/types/music";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 
 export default function ArtistPage() {
@@ -63,7 +64,7 @@ export default function ArtistPage() {
         });
       }
     } catch (e) {
-      console.error(e);
+      toast.error("Error: Couldn't ")
     }
   };
 
@@ -76,14 +77,14 @@ export default function ArtistPage() {
   return (
     <View className="w-full h-full p-4 dark:bg-black flex flex-col gap-0">
       <View className="flex flex-row justify-between items-center">
-        <Pressable onPress={() => router.navigate("/albums")}>
+        <Pressable onPress={() => router.navigate("/artists")}>
           <AntDesign
             name="arrow-left"
             size={20}
             color={theme.theme === "dark" ? "white" : "black"}
           />
         </Pressable>
-        <Text className="dark:text-white">Album</Text>
+        <Text className="dark:text-white">Artist</Text>
         <View className="flex flex-row gap-2 items-center">
           <Pressable>
             <Entypo

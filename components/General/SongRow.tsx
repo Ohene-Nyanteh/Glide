@@ -1,5 +1,5 @@
 import { shortenText } from "@/lib/shortenText";
-import { music } from "@/types/music";
+import { music, musicDB } from "@/types/music";
 import { FontAwesome, Entypo } from "@expo/vector-icons";
 import type { musicDelta } from "@ohene/flow-player";
 import { router } from "expo-router";
@@ -7,11 +7,12 @@ import { memo, useCallback, useEffect, useState } from "react";
 import { Image, View, Text, Pressable } from "react-native";
 import { useTheme } from "@/utils/contexts/ThemeContext";
 import SongMenu from "./SongMenu";
+import { useSettings } from "@/utils/contexts/SettingsContext";
 
 function SongRow({ song }: { song: musicDelta }) {
   const [imageError, setImageError] = useState(false);
   const { theme } = useTheme();
-  const [metadata, setMetadata] = useState<musicDelta["metadata"] | music>({
+  const [metadata, setMetadata] = useState<musicDelta["metadata"] | musicDB>({
     name: "",
     album: "",
     artist: "",
@@ -20,6 +21,8 @@ function SongRow({ song }: { song: musicDelta }) {
     genre: "",
     image: "",
   });
+
+  const settingsContext = useSettings();
 
   useEffect(() => {
     setMetadata({
@@ -47,10 +50,11 @@ function SongRow({ song }: { song: musicDelta }) {
           ) : (
             <Image
               source={{ uri: metadata?.image as string }}
-              height={12}
-              onError={() => setImageError(true)}
+              onError={() => {
+                setImageError(true);
+              }}
               width={20}
-              className="h-14 w-16  rounded object-cover"
+              className="h-12 w-16  rounded object-cover"
             />
           )
         ) : (
@@ -62,14 +66,14 @@ function SongRow({ song }: { song: musicDelta }) {
           <Text
             className="font-semibold dark:text-white "
             style={{
-              color: song.isPlaying
+              color: song.id === settingsContext?.settings.currentPlayingID
                 ? "blue"
                 : theme.theme === "dark"
                   ? "white"
                   : "black",
             }}
           >
-            {shortenText(metadata?.name || "", 40) ||
+            {shortenText(metadata?.name || "", 35) ||
               shortenText((song.file_name as string) || "", 30)}
           </Text>
           <Text className="text-xs text-gray-500">
@@ -80,14 +84,7 @@ function SongRow({ song }: { song: musicDelta }) {
           </Text>
         </View>
       </View>
-      <SongMenu
-        theme={theme.theme}
-        song_id={song.id}
-        song_name={metadata?.name}
-        song_image={metadata?.image}
-        song_album={metadata?.album}
-        song_artist={metadata?.artist}
-      />
+      <SongMenu theme={theme.theme} song={song} song_id={song.id} />
     </Pressable>
   );
 }

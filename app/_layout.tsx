@@ -3,7 +3,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "@/global.css";
-import ThemeContextProvider from "@/utils/contexts/ThemeContext";
+import ThemeContextProvider, { useTheme } from "@/utils/contexts/ThemeContext";
 import PlayerContextProvider from "@/utils/contexts/PlayerContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View } from "react-native";
@@ -17,6 +17,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toasts } from "@backpackapp-io/react-native-toast";
 import SettingsContextProvider from "@/utils/contexts/SettingsContext";
 import AudioPlayerWrapper from "@/utils/contexts/AudioContext";
+import NotificationContextProvider from "@/utils/contexts/NotificationContext";
+import MediaAudioPlayerProvider from "@/utils/contexts/AudioPlayerContext";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -39,6 +41,12 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const { theme } = useTheme();
+  if (theme.theme === "dark") {
+    StatusBar.setBarStyle("light-content");
+  } else {
+    StatusBar.setBarStyle("dark-content");
+  }
   const style = StyleSheet.create({
     AndroidSafeArea: {
       paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
@@ -61,7 +69,7 @@ function RootLayoutNav() {
           <Stack.Screen name="artists" />
           <Stack.Screen name="albums" />
           <Stack.Screen name="playMedia" />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="search"/>
         </Stack>
       </SafeAreaProvider>
     </View>
@@ -92,11 +100,15 @@ function RootWrapper() {
     <ThemeContextProvider>
       <UserContextProvider>
         <SettingsContextProvider>
-          <AudioPlayerWrapper>
-            <View className={`w-full h-full relative`}>
-              <RootLayoutNav />
-            </View>
-          </AudioPlayerWrapper>
+          <MediaAudioPlayerProvider>
+            <NotificationContextProvider>
+              <AudioPlayerWrapper>
+                <View className={`w-full h-full relative`}>
+                  <RootLayoutNav />
+                </View>
+              </AudioPlayerWrapper>
+            </NotificationContextProvider>
+          </MediaAudioPlayerProvider>
         </SettingsContextProvider>
       </UserContextProvider>
       <Toasts />
